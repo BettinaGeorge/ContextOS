@@ -1,41 +1,51 @@
 # ADR-001: Phase 1 MVP technology stack
 
-Status: Proposed — flagging for confirmation before implementation starts, since this locks in real dependencies.
+Status: Proposed — flagging for final confirmation before implementation starts, since this locks in real dependencies.
 
 ## Context
 
-`docs/prd.md` §4 scopes a Phase 1 MVP: single user, single workspace, single GitHub repo, single Notion source, one workflow. The handoff (§19) suggested a general-purpose stack but explicitly called it "a starting point, not a final decision." We need a concrete, minimal choice now because CLAUDE.md needs real commands, and because indecision here is itself a time cost against the Friday deadline.
+`docs/prd.md` §4 scopes a Phase 1 MVP: single user, single workspace, single GitHub repo, single Notion source, one workflow, target Friday 2026-07-24. The handoff (§19) suggested a general-purpose stack but explicitly called it "a starting point, not a final decision."
 
-Guiding constraint: pick the stack that gets a working, demoable product by Friday, 2026-07-24 — not the stack that's most "correct" for a mature multi-tenant SaaS. Anything that isn't needed to hit the Phase 1 MVP acceptance criteria is deferred, even if the handoff mentions it.
+Two constraints shape this decision, and they sometimes pull in different directions:
+
+1. **Budget: total spend must not exceed $10, and should not be recurring.** No paid subscriptions. Metered, pay-per-use costs are acceptable only if they realistically stay well under that cap and there's a way to hard-cap them.
+2. **Timeline: working by Friday.** Not so tight that every choice has to be the fastest possible one (an earlier draft of this ADR over-indexed on speed at the cost of reliability and cost risk — see the first Alternatives entry below), but real enough that "build it yourself for full control" isn't free either.
+
+Where those constraints conflict, budget wins — a slower or more manual path is preferable to any recurring bill or open-ended cost exposure.
 
 ## Decision
 
 | Layer | Choice | Why |
 |---|---|---|
-| Backend | Python 3.12, FastAPI, Pydantic v2 | Matches builder's existing FastAPI experience (handoff §2); async-friendly for connector calls. |
-| ORM / migrations | SQLAlchemy 2.0 + Alembic | Standard, well-documented, works cleanly with pgvector. |
-| Primary DB | PostgreSQL | Per handoff §19. |
-| Vector storage | pgvector extension on the same Postgres instance | Per handoff §19 — avoid a second database for this Phase 1 push. |
-| Graph storage | None — relationships as Postgres rows (per canonical model in PRD §6) | No graph traversal is in scope by Friday (2026-07-24) (PRD §4); a graph DB would be pure overhead right now. |
-| Background jobs | None — synchronous ingestion or FastAPI `BackgroundTasks` | Ingesting one repo + one Notion source is small enough not to need Celery/Redis. Revisit in Phase 2 if ingestion time becomes a UX problem. |
-| Auth | Managed provider (Clerk) rather than hand-rolled | Building auth from scratch by Friday (2026-07-24) would eat the majority of the available time. Clerk has native org/workspace support, which keeps the multi-tenant-ready data model intent from PRD §1 without hand-building it. |
-| Frontend | Next.js (App Router) + TypeScript + React + Tailwind + shadcn/ui | Matches builder's React/TS experience; shadcn/ui per handoff §19. |
-| LLM provider | Anthropic Claude, via a single thin interface (not a multi-provider abstraction) | Multi-provider abstraction before there's one working provider is premature (development principle #1, no overengineering). Interface is still isolated behind one module so swapping later isn't a rewrite. |
-| Embeddings | Voyage AI | Hosted, no local model management, commonly paired with Claude. Reassess if cost/quota becomes an issue. |
-| Package management | `uv` (backend), `pnpm` (frontend) | Fast installs, matters when iterating quickly under a tight deadline. |
-| Lint/format | `ruff` (backend, lint + format), `eslint` + `prettier` (frontend) | |
-| Testing | `pytest` + `pytest-asyncio` (backend), `vitest` + React Testing Library (frontend) | |
-| Deployment | Local/dev only by Friday (2026-07-24) | Real deployment is Phase 2 (`docs/roadmap.md`) — not needed to validate the workflow. |
+| Backend | Python 3.12, FastAPI, Pydantic v2 | Matches builder's existing FastAPI experience (handoff §2); async-friendly for connector calls. Free. |
+| ORM / migrations | SQLAlchemy 2.0 + Alembic | Standard, well-documented, works cleanly with pgvector. Free. |
+| Primary DB + vector storage | PostgreSQL + pgvector, via **Supabase's free tier** | Free tier covers this project's scale with room to spare. Bundling DB with auth (see below) under one vendor keeps the number of free-tier accounts to track to a minimum. Run locally via Docker during early development; point at the hosted Supabase instance once ready to deploy/share. No dedicated vector DB — pgvector remains correct at this scale regardless of budget, per handoff §19. |
+| Graph storage | None — relationships as Postgres rows (per canonical model in PRD §6) | No graph traversal is in scope by Friday (PRD §4); a graph DB would be pure overhead right now, and would also mean a second hosted service to keep free. |
+| Background jobs | Postgres-backed job table (a `jobs` row with status/attempts, polled by a worker) — not Redis/Celery/RQ | Needed for real reasons (ingestion status tracking and re-indexing are functional requirements in the PRD, and in-process `BackgroundTasks` loses progress on a restart), but a dedicated queue means hosting Redis somewhere — another free-tier vendor to manage for a service one repo + one Notion source doesn't actually require yet. A DB-backed queue gets the durability without the extra dependency. |
+| Auth | **Supabase Auth** (not Clerk) | Free tier is generous (well beyond one user), and since Supabase is already the DB vendor, this avoids adding a second auth-specific vendor (Clerk) with its own free-tier ceiling and billing surface. Trade-off: no prebuilt "Organizations" UI like Clerk's — the workspace/membership model has to be built by hand, which the extended timeline now allows for. |
+| Frontend | Next.js (App Router) + TypeScript + React + Tailwind + shadcn/ui, hosted free on **Vercel** | Matches builder's React/TS experience; Vercel's free tier is a genuine $0, no card required for this scale. |
+| Backend hosting | **Render free web service tier** | $0. Trade-off: free instances spin down when idle, so first request after inactivity is slow (cold start). Acceptable for a portfolio-stage demo; revisit if this becomes a real UX problem. |
+| LLM provider | Anthropic Claude, via a single thin interface (not a multi-provider abstraction) | Multi-provider abstraction before there's one working provider is premature (development principle #1). This is the one layer that can't be made fully free — it's the core product function. Pay-per-use, not a subscription, so it doesn't violate "no recurring cost." Use Claude Haiku for day-to-day development/iteration and reserve Sonnet for acceptance-criteria validation runs, to keep total spend low. **Set a hard monthly spend limit in the Anthropic Console (recommend $8) so the $10 cap can't be exceeded even by accident.** |
+| Embeddings | Voyage AI | Also pay-per-use, not a subscription. Code-tuned embedding models (`voyage-code-3`) are a real quality advantage here since the product embeds source code, not just prose — this was a genuine technical fit, not just a fast pick. Cost for embedding one repo + one Notion source is low (one-time ingestion, not per-query), so it fits inside the budget alongside the LLM spend. Reassess toward a free local model (e.g. `sentence-transformers`) if actual usage threatens the $10 cap. |
+| Package management | `uv` (backend), `pnpm` (frontend) | Fast installs. Free. |
+| Lint/format | `ruff` (backend, lint + format), `eslint` + `prettier` (frontend) | Free. |
+| Testing | `pytest` + `pytest-asyncio` (backend), `vitest` + React Testing Library (frontend) | Free. |
+
+**Budget note:** check for the GitHub Student Developer Pack (likely already available) before paying for anything not listed as free above — it doesn't typically cover Anthropic/Voyage usage directly, but may cover incidental needs (domain, extra cloud credit) if free tiers above turn out to be insufficient.
 
 ## Consequences
 
-- Multi-repo, multi-tenant collaboration UI, incremental sync, graph traversal, and a job queue are all cut for this Phase 1 push but the data model (workspace_id everywhere, artifact/relationship tables) doesn't block adding them later.
-- Depending on a managed auth provider (Clerk) is a real external dependency and a cost consideration once past free tier — acceptable trade for short-timeline delivery, but worth revisiting if the project grows.
-- No graph database avoids premature complexity per the handoff's own guidance (§19: "avoid introducing a graph database too early unless benchmarks show it is needed").
+- Multi-repo, multi-tenant collaboration UI, incremental sync, and graph traversal are all still cut for Phase 1, but the data model (workspace_id everywhere, artifact/relationship tables) doesn't block adding them later.
+- Building the workspace/membership model by hand (instead of using Clerk's Organizations) is more work than the fastest possible path, but it's a one-time cost paid now in exchange for zero ongoing vendor billing risk.
+- The Postgres-backed job table is less capable than a real queue (no built-in retry/backoff, worker concurrency, or dead-letter handling) — acceptable for one repo + one Notion source; revisit if ingestion volume grows in Phase 2+.
+- Render's free-tier cold starts are a real (if minor) UX cost accepted in exchange for $0 hosting.
+- LLM + embedding spend is the one area with genuine (if small and bounded) ongoing cost — mitigated with a hard spend cap, not eliminated. This is disclosed explicitly rather than glossed over as "free."
 
 ## Alternatives considered
 
+- **Clerk for auth** — reconsidered and rejected. Originally chosen for speed under the earlier same-weekend timeline; with the budget constraint now explicit, a second billable vendor (even one with a workable free tier) isn't worth it when Supabase Auth covers the same need at $0 with one fewer account to manage.
+- **Redis + RQ or Celery for ingestion** — reconsidered and rejected for the same reason: real value (durability, status tracking) but not worth a second hosted free-tier service when a Postgres-backed job table gets most of the benefit at no extra cost.
+- **Local-only deployment through Phase 1** — reconsidered and rejected. Originally deferred for speed; now that both Vercel and Render have workable $0 tiers, deploying during Phase 1 costs nothing and better matches wanting to "act like a startup" with something demoable, not just something running on a laptop.
+- **Fully local/open-source LLM (via Ollama) to guarantee zero LLM cost** — considered, rejected for now given the $10 (not $0) ceiling makes it unnecessary, and this product's evidence-grounded reasoning quality benefits materially from a stronger hosted model. Worth revisiting only if actual Claude spend threatens the cap.
 - **Full multi-provider LLM abstraction now** — rejected, premature given only one provider is actually used.
-- **Celery + Redis for ingestion** — rejected for this Phase 1 push; one repo + one Notion source doesn't need a distributed queue yet.
-- **Hand-rolled auth** — rejected for this Phase 1 push; not the differentiated part of the product, not worth the time by Friday (2026-07-24).
 - **Neo4j for relationships** — rejected; no graph traversal is in scope yet, and the handoff itself recommends deferring this.
