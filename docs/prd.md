@@ -1,15 +1,15 @@
 # ContextOS — Product Requirements Document
 
-Status: **Draft v1 — approved for Weekend MVP scope.** Source of truth for product scope. Architecture decisions live in `docs/decisions/`. Full original context lives in `CONTEXT_OS_CLAUDE_HANDOFF.md` (background reference, not authoritative where this document differs).
+Status: **Draft v1 — approved for Phase 1 MVP scope.** Source of truth for product scope. Architecture decisions live in `docs/decisions/`. Full original context lives in `CONTEXT_OS_CLAUDE_HANDOFF.md` (background reference, not authoritative where this document differs).
 
 ## 1. Decisions locked so far
 
 | Question | Decision | Why |
 |---|---|---|
-| Audience | Multi-user SaaS, from day one architecturally | Data model is workspace-isolated from the start so this isn't a rewrite later. Functional scope for the Weekend MVP still only exercises a single-user path — see §4. |
+| Audience | Multi-user SaaS, from day one architecturally | Data model is workspace-isolated from the start so this isn't a rewrite later. Functional scope for the Phase 1 MVP still only exercises a single-user path — see §4. |
 | First connectors | GitHub + Notion (Jira deferred) | No personal/test Jira access available; Notion is fast to integrate and the builder can generate real test content immediately. Jira is the planned fast-follow connector (see `docs/roadmap.md`) because its structured issue/epic schema is better suited to deterministic relationship extraction long-term. |
 | Repo scope | Single repository per workspace | Multi-repo adds cross-repo relationship modeling, retrieval disambiguation, and UI scope that isn't needed to prove the core loop. Data model should not preclude multi-repo later. |
-| Timeline | Working MVP by end of weekend, then continuous iteration | Scope is cut aggressively below the handoff's original MVP definition (§8-9 of the handoff) to make this achievable — see §4. |
+| Timeline | Working MVP by Friday, 2026-07-24, then continuous iteration | Originally targeted "end of weekend" (~1 day); extended to ~6 days once that proved too tight a constraint on its own. Scope in §4 is still cut below the handoff's original MVP definition (§8-9 of the handoff) — the extra days buy room to do the same scope carefully (real tests, a more thorough manual eval pass) rather than an excuse to silently add scope. |
 | First persona | Engineer switching teams / joining an existing team | See §2. |
 | First workflow | Trace a spec/doc to code | Adapted from "trace a ticket to code" since Notion has no ticket-ID scheme. See §5. |
 
@@ -28,9 +28,9 @@ Deferred personas (not designed for yet): engineering managers/leads (need aggre
 
 Let a user connect one GitHub repository and one Notion workspace, then ask questions that require connecting a written spec/doc to the code that implements it — and get an answer that cites its sources, distinguishes evidence from inference, and says so when it doesn't have enough evidence.
 
-## 4. Weekend MVP scope (what ships first)
+## 4. MVP scope — target Friday, 2026-07-24 (what ships first)
 
-This is intentionally narrower than the handoff's original MVP section. Anything not listed here is explicitly **out of scope for the weekend build** and lives in `docs/roadmap.md` instead.
+This is intentionally narrower than the handoff's original MVP section. Anything not listed here is explicitly **out of scope for this build** and lives in `docs/roadmap.md` instead.
 
 **In scope:**
 - Sign in (single user account, via managed auth — see ADR-001)
@@ -46,7 +46,7 @@ This is intentionally narrower than the handoff's original MVP section. Anything
 - Answer generation grounded only in retrieved evidence, with inline source citations (links back to GitHub/Notion), and explicit "insufficient evidence" responses when nothing relevant is found
 - Basic error handling for connector auth failures and empty ingestion results
 
-**Explicitly out of scope for the weekend build** (deferred, see roadmap):
+**Explicitly out of scope for this Phase 1 build** (deferred, see roadmap):
 - Incremental sync / webhooks
 - Multiple repos or multiple Notion sources per workspace
 - The other three workflows (understand a feature, fix a bug, explore architecture)
@@ -77,11 +77,11 @@ This is intentionally narrower than the handoff's original MVP section. Anything
 
 ## 6. Data model
 
-Use the canonical artifact/relationship model from the handoff (§12) as-is for the weekend build, scoped to the artifact types actually needed: `source_file`, `commit`, `pull_request`, `issue`, `document` (Notion page). Relationship origins used in the weekend build: `explicit` and `metadata-derived` only — `model-inferred` and `user-confirmed` are schema-ready but not exercised yet.
+Use the canonical artifact/relationship model from the handoff (§12) as-is for this Phase 1 build, scoped to the artifact types actually needed: `source_file`, `commit`, `pull_request`, `issue`, `document` (Notion page). Relationship origins used in this Phase 1 build: `explicit` and `metadata-derived` only — `model-inferred` and `user-confirmed` are schema-ready but not exercised yet.
 
 ## 7. Success criteria
 
-**Weekend MVP (functional bar, not a benchmark):**
+**Phase 1 MVP (functional bar, not a benchmark):**
 - A cold-start user can sign in, connect GitHub + Notion, select a repo, and get one grounded, cited answer to a real question — start to finish, no manual DB intervention.
 - Zero fabricated citations across a manually-run set of ~10 test questions.
 - At least 7 of 10 hand-written test questions get a genuinely useful, correctly-cited answer (the other 3 may legitimately abstain if evidence really is missing — that counts as correct behavior, not failure).
@@ -91,11 +91,11 @@ Use the canonical artifact/relationship model from the handoff (§12) as-is for 
 - Recall@10 for exact-ID/exact-filename queries measured and tracked (no target yet — first pass establishes the baseline)
 - Time-to-context: self-timed comparison of "trace a doc to code" via ContextOS vs. manually cross-referencing GitHub + Notion, on the same ~10 questions
 
-## 8. Non-functional requirements (weekend scope)
+## 8. Non-functional requirements (Phase 1 scope)
 
 - Connector tokens encrypted at rest, never logged in plaintext
 - All ingested content (repo files, commit messages, PR descriptions, Notion page content) treated as untrusted input — never interpreted as instructions to the model (basic system-prompt/content separation; full adversarial test suite deferred to Phase 3)
-- Data isolated by `workspace_id` on every table, even though only one workspace is exercised this weekend
+- Data isolated by `workspace_id` on every table, even though only one workspace is exercised by Friday (2026-07-24)
 - No training on ingested content
 
 ## 9. Non-goals (current)
@@ -114,6 +114,6 @@ Carried over from the handoff (§21), still valid:
 
 ## 10. Open questions (explicitly deferred, not silently decided)
 
-- Exact chunking strategy for code (naive vs. function-boundary) — decide during implementation if time allows this weekend; default to naive if not.
+- Exact chunking strategy for code (naive vs. function-boundary) — decide during implementation if time allows by Friday (2026-07-24); default to naive if not.
 - Whether Notion's own API rate limits or block-nesting model cause meaningful ingestion friction — unknown until integration is attempted.
 - Real thresholds for the near-term success metrics in §7 — can't be set responsibly before the eval harness exists.

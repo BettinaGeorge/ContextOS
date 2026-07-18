@@ -72,9 +72,13 @@ Stack decisions and rationale: `docs/decisions/ADR-001-weekend-mvp-stack.md`.
 
 ## Spec-driven development requirements
 
+This project uses [GitHub Spec Kit](https://github.com/github/spec-kit) (`specify` CLI). Non-negotiable principles live in `.specify/memory/constitution.md` — read it; if anything here ever conflicts with it, the constitution wins and this file should be corrected.
+
 Required sequence for every feature, no exceptions:
 
 **requirement → specification → acceptance criteria → architecture decision → implementation plan → tasks → code → tests → validation → documentation update**
+
+Mapped to Spec Kit commands: `/speckit-clarify` (if needed) → `/speckit-specify` → `/speckit-plan` (references an ADR under `docs/decisions/` for any real architecture trade-off) → `/speckit-tasks` → optionally `/speckit-analyze` → `/speckit-implement`.
 
 - Do not write implementation code before a spec with testable acceptance criteria exists under `specs/NNN-<feature-name>/spec.md`.
 - Architecture decisions with real trade-offs get an ADR under `docs/decisions/`, not a silent choice buried in code.
@@ -100,7 +104,7 @@ Required sequence for every feature, no exceptions:
 
 ## Commands
 
-Not yet applicable — `backend/` and `frontend/` haven't been created. This section will be filled in with real commands (install, format, lint, test, run) as soon as the Phase 1 spec (`specs/001-weekend-mvp/`) is implemented, per ADR-001:
+Not yet applicable — `backend/` and `frontend/` haven't been created. This section will be filled in with real commands (install, format, lint, test, run) as soon as the Phase 1 spec (`specs/001-phase1-mvp/`) is implemented, per ADR-001:
 
 - Backend expected to use `uv` for dependency management, `ruff` for lint/format, `pytest` for tests, `uvicorn` to run.
 - Frontend expected to use `pnpm` for dependency management, `eslint`/`prettier` for lint/format, `vitest` for tests, `next dev` to run.

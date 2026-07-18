@@ -8,9 +8,9 @@ Phased against the scope decisions in `docs/prd.md`. Each phase should be functi
 - Locked: audience (multi-tenant-ready architecture), first connectors (GitHub + Notion), repo scope (single), first persona, first workflow
 - Wrote `docs/vision.md`, `docs/prd.md`, this roadmap
 
-## Phase 1 — Weekend MVP
+## Phase 1 — Phase 1 MVP
 
-Scope defined in `docs/prd.md` §4. Target: end of this weekend.
+Scope defined in `docs/prd.md` §4. Target: Friday, 2026-07-24.
 
 - Auth + single workspace creation
 - GitHub connector: OAuth/PAT, single repo, full ingestion (files, PRs, commits, issues)
@@ -21,7 +21,7 @@ Scope defined in `docs/prd.md` §4. Target: end of this weekend.
 - Citations on every answer; explicit abstention when evidence is insufficient
 - Manual validation against the ~10-question set in `docs/prd.md` §7
 
-**Exit criteria:** success criteria in PRD §7 (weekend bar) are met.
+**Exit criteria:** success criteria in PRD §7 (Phase 1 bar) are met.
 
 ## Phase 2 — Harden the core loop
 
