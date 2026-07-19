@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSession } from "@/lib/useSession";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import { ApiError, createWorkspace, getMe, type Workspace } from "@/lib/api";
 
 export default function WorkspacePage() {
@@ -28,6 +29,10 @@ export default function WorkspacePage() {
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!isSupabaseConfigured) {
+      setError("Supabase isn't configured yet — set real values in frontend/.env.local.");
+      return;
+    }
     try {
       const { error: signInError } = await signInWithEmail(email);
       if (signInError) {
@@ -74,6 +79,12 @@ export default function WorkspacePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {!isSupabaseConfigured && (
+              <p className="mb-4 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                Supabase isn&apos;t configured yet — sign-in will not work until real values are
+                set in <code>frontend/.env.local</code>.
+              </p>
+            )}
             {!magicLinkSent && (
               <form onSubmit={handleSignIn} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
@@ -87,7 +98,9 @@ export default function WorkspacePage() {
                     placeholder="you@example.com"
                   />
                 </div>
-                <Button type="submit">Send magic link</Button>
+                <Button type="submit" disabled={!isSupabaseConfigured}>
+                  Send magic link
+                </Button>
                 {error && <p className="text-sm text-red-600">{error}</p>}
               </form>
             )}

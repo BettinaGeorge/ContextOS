@@ -10,6 +10,11 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+# NOTE: bare `lib/` and `lib64/` were removed here — they matched ANY
+# directory named `lib` anywhere in the tree (no leading slash), which
+# silently excluded frontend/src/lib/ from every commit despite the files
+# being on disk and working locally. .venv/venv/env below already cover the
+# actual Python virtualenv lib/ directories these were meant for.
 .Python
 build/
 develop-eggs/
@@ -17,8 +22,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
