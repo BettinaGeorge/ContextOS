@@ -19,6 +19,14 @@ class Settings(BaseSettings):
 
     token_encryption_key: str
 
+    # Comma-separated. Defaults to the local frontend dev server; update (or
+    # override via env) once deployed to Vercel with a real domain.
+    cors_allowed_origins: str = "http://localhost:3000"
+
+    @property
+    def cors_allowed_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_allowed_origins.split(",") if o.strip()]
+
 
 @lru_cache
 def get_settings() -> Settings:

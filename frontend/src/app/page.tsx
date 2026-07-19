@@ -18,12 +18,22 @@ export default function WorkspacePage() {
   const [workspaceName, setWorkspaceName] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [meError, setMeError] = useState<string | null>(null);
+
+  function fetchMe(currentToken: string) {
+    getMe(currentToken)
+      .then((me) => {
+        setWorkspaceId(me.workspace_id);
+        setMeError(null);
+      })
+      .catch((err: unknown) =>
+        setMeError(err instanceof ApiError ? err.message : "Failed to load account"),
+      );
+  }
 
   useEffect(() => {
     if (!token) return;
-    getMe(token)
-      .then((me) => setWorkspaceId(me.workspace_id))
-      .catch((err: unknown) => setError(err instanceof ApiError ? err.message : "Failed to load account"));
+    fetchMe(token);
   }, [token]);
 
   async function handleSignIn(e: React.FormEvent) {
@@ -118,7 +128,18 @@ export default function WorkspacePage() {
           <CardDescription>Signed in as {session.user.email}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          {workspaceId === undefined && <p className="text-sm text-zinc-500">Loading workspace...</p>}
+          {workspaceId === undefined && !meError && (
+            <p className="text-sm text-zinc-500">Loading workspace...</p>
+          )}
+
+          {meError && (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-red-600">{meError}</p>
+              <Button variant="outline" onClick={() => token && fetchMe(token)}>
+                Retry
+              </Button>
+            </div>
+          )}
 
           {workspaceId === null && (
             <form onSubmit={handleCreateWorkspace} className="flex flex-col gap-4">

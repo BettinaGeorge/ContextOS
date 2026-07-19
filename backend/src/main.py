@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.errors import register_exception_handlers
+from src.core.config import get_settings
 from src.core.job_worker import start_job_worker
 
 
@@ -15,6 +17,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="ContextOS API", lifespan=lifespan)
 register_exception_handlers(app)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_settings().cors_allowed_origins_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 from src.api.ask import router as ask_router  # noqa: E402
 from src.api.auth import router as auth_router  # noqa: E402
