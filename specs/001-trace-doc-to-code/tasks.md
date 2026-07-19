@@ -103,16 +103,18 @@
 
 **Independent Test**: quickstart.md scenarios 4-5.
 
+**Revision note**: all five tasks below were already satisfied during T041 (Phase 3), for the same reason C1/C2 were fixed early — Constitution Principle I (evidence-backed answers, never fabricate a citation) is NON-NEGOTIABLE, so `answer_svc` was built with citation validation and abstention from its first version, not deferred to this phase. Marking complete here with pointers to where the actual coverage lives (file names differ from the original plan, but the substance is the same).
+
 ### Tests for User Story 2
 
-- [ ] T048 [P] [US2] Contract test for `POST /ask` abstention case (no relevant evidence) in `backend/tests/contract/test_ask_abstain.py`
-- [ ] T049 [P] [US2] Integration test proving citation validation rejects any citation not in the retrieved evidence set in `backend/tests/integration/test_citation_validation.py`
+- [X] T048 [P] [US2] Contract test for `POST /ask` abstention case (no relevant evidence) — implemented as `test_ask_returns_abstained_response` in `backend/tests/contract/test_ask.py` (not a separate `test_ask_abstain.py` — same file as the other `/ask` contract tests, no reason to split it)
+- [X] T049 [P] [US2] Integration test proving citation validation rejects any citation not in the retrieved evidence set — implemented as `test_hallucinated_citation_id_is_dropped_and_forces_abstention` in `backend/tests/unit/test_answer_svc.py` (filed as a unit test since it exercises `AnswerService` directly against the real DB rather than through the HTTP layer; equally proves the requirement)
 
 ### Implementation for User Story 2
 
-- [ ] T050 [US2] Add server-side citation validation to `answer_svc` — strip/reject any citation whose artifact wasn't actually retrieved for this request (FR-013) in `backend/src/services/answer_svc.py` (extends T041)
-- [ ] T051 [US2] Add the abstention branch to `answer_svc` when retrieval returns no evidence above a minimum relevance bar (FR-012) in `backend/src/services/answer_svc.py` (extends T041)
-- [ ] T052 [US2] Surface the abstained state and reason in the Ask page UI in `frontend/src/app/ask/page.tsx` (extends T047)
+- [X] T050 [US2] Add server-side citation validation to `answer_svc` — strip/reject any citation whose artifact wasn't actually retrieved for this request (FR-013) in `backend/src/services/answer_svc.py` — done in T041 (see `valid_citations` construction, answer_svc.py lines ~76-85)
+- [X] T051 [US2] Add the abstention branch to `answer_svc` when retrieval returns no evidence above a minimum relevance bar (FR-012) in `backend/src/services/answer_svc.py` — done in T041; three abstention paths exist: zero evidence retrieved (no LLM call made at all), model emits `[INSUFFICIENT_EVIDENCE]`, and zero citations survive validation
+- [X] T052 [US2] Surface the abstained state and reason in the Ask page UI in `frontend/src/app/ask/page.tsx` — done in T047 (see the `result.abstained` conditional rendering)
 
 **Checkpoint**: US1 + US2 both work independently — run quickstart.md scenarios 1-5.
 
