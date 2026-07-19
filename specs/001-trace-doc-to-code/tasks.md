@@ -89,9 +89,9 @@
 - [X] T042 [US1] Implement `POST /connectors/github`, `POST /connectors/notion`, `GET /connectors/{id}/status` in `backend/src/api/connectors.py` (depends on T037)
 - [X] T043 [US1] Implement `POST /ingest/{connector_id}`, `GET /ingest/{job_id}/status` in `backend/src/api/ingest.py` (depends on T039)
 - [X] T044 [US1] Implement `POST /ask` in `backend/src/api/ask.py` (depends on T041)
-- [ ] T045 [US1] Implement the Workspace page (sign in, create workspace) in `frontend/src/app/page.tsx` (depends on T026)
-- [ ] T046 [US1] Implement the Connectors page in `frontend/src/app/connect/page.tsx` (depends on T042)
-- [ ] T047 [US1] Implement the Ask page (submit question, render answer + citations with origin badges) in `frontend/src/app/ask/page.tsx` (depends on T044)
+- [X] T045 [US1] Implement the Workspace page (sign in, create workspace) in `frontend/src/app/page.tsx` (depends on T026)
+- [X] T046 [US1] Implement the Connectors page in `frontend/src/app/connect/page.tsx` (depends on T042)
+- [X] T047 [US1] Implement the Ask page (submit question, render answer + citations with origin badges) in `frontend/src/app/ask/page.tsx` (depends on T044)
 
 **Checkpoint**: User Story 1 is fully functional and independently testable — run quickstart.md scenarios 1-3. Because T020/T023/T041 now build in encryption and content isolation from the start, this checkpoint satisfies FR-015/FR-016 without waiting for Polish.
 
