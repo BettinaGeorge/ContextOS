@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from typing import Any
 
 from notion_client import AsyncClient
@@ -96,8 +97,8 @@ class NotionConnector(BaseConnector):
             title=title,
             content=content,
             source_url=page.get("url", ""),
-            created_at=page.get("created_time"),
-            updated_at=page.get("last_edited_time"),
+            created_at=_parse_dt(page.get("created_time")),
+            updated_at=_parse_dt(page.get("last_edited_time")),
         )
 
     async def normalize_relationship(
@@ -132,3 +133,9 @@ def extract_github_links(text: str) -> list[str]:
     """Used by relationship_svc (T038) for the Notion side of deterministic
     link extraction (research.md §4)."""
     return GITHUB_URL_RE.findall(text)
+
+
+def _parse_dt(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))

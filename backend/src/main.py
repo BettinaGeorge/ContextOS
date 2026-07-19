@@ -16,14 +16,21 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="ContextOS API", lifespan=lifespan)
 register_exception_handlers(app)
 
-# Routers are added incrementally as each is implemented (Phase 3+); importing
-# here rather than at module scope above avoids a partial-app import error
-# while api/connectors.py, api/ingest.py, api/ask.py are still being built out.
+from src.api.ask import router as ask_router  # noqa: E402
 from src.api.auth import router as auth_router  # noqa: E402
+from src.api.connectors import router as connectors_router  # noqa: E402
+
+# Importing api.ingest also runs services.ingestion_svc at module load time,
+# which registers its job handlers with the worker (T022/T039) — this must
+# happen before the lifespan's start_job_worker() call above runs the loop.
+from src.api.ingest import router as ingest_router  # noqa: E402
 from src.api.workspaces import router as workspaces_router  # noqa: E402
 
 app.include_router(auth_router)
 app.include_router(workspaces_router)
+app.include_router(connectors_router)
+app.include_router(ingest_router)
+app.include_router(ask_router)
 
 
 @app.get("/health")

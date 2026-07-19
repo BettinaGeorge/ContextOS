@@ -34,6 +34,14 @@ class ArtifactRepository:
         )
         return result.scalar_one_or_none()
 
+    async def get_by_source_url(self, workspace_id: uuid.UUID, source_url: str) -> Artifact | None:
+        result = await self._session.execute(
+            select(Artifact).where(
+                Artifact.workspace_id == workspace_id, Artifact.source_url == source_url
+            )
+        )
+        return result.scalars().first()
+
     async def list_by_workspace(
         self, workspace_id: uuid.UUID, artifact_type: ArtifactType | None = None
     ) -> list[Artifact]:
