@@ -28,12 +28,18 @@ export default function WorkspacePage() {
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const { error: signInError } = await signInWithEmail(email);
-    if (signInError) {
-      setError(signInError.message);
-      return;
+    try {
+      const { error: signInError } = await signInWithEmail(email);
+      if (signInError) {
+        setError(signInError.message);
+        return;
+      }
+      setMagicLinkSent(true);
+    } catch {
+      // supabase-js throws (rather than resolving with an error field) on a
+      // network-level failure, e.g. an unreachable/placeholder project URL.
+      setError("Couldn't reach the authentication service. Check the Supabase configuration.");
     }
-    setMagicLinkSent(true);
   }
 
   async function handleCreateWorkspace(e: React.FormEvent) {
