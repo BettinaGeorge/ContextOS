@@ -27,6 +27,8 @@ dependencies = [
 dev = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "respx>=0.23.1",
     "ruff>=0.15.22",
 ]
 
@@ -40,6 +42,17 @@ select = ["E", "F", "I", "UP", "B"]
 # dependency-injection idiom, not the footgun this rule normally guards against.
 ignore = ["B008"]
 
+[tool.ruff.lint.per-file-ignores]
+# Alembic autogenerates these; not worth hand-editing generated migration code.
+"alembic/versions/*.py" = ["E501", "UP007", "UP006", "UP035", "I001"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# Tests share one event loop (session scope) rather than pytest-asyncio's
+# default per-test loop, because the SQLAlchemy async engine's connection
+# pool is a single module-level object — asyncpg connections created in one
+# event loop can't be closed from a different one.
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
+pythonpath = ["."]

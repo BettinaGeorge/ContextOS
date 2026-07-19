@@ -69,7 +69,7 @@
 
 > Write these first; confirm they fail before implementation.
 
-- [ ] T028 [P] [US1] Contract test for `POST /workspaces` in `backend/tests/contract/test_workspaces.py`
+- [X] T028 [P] [US1] Contract test for `POST /workspaces` in `backend/tests/contract/test_workspaces.py`
 - [ ] T029 [P] [US1] Contract test for `POST /connectors/github` and `POST /connectors/notion` in `backend/tests/contract/test_connectors.py`
 - [ ] T030 [P] [US1] Contract test for `POST /ask` deterministic-citation case in `backend/tests/contract/test_ask.py`
 - [ ] T031 [P] [US1] Integration test covering quickstart.md scenario 3 — no deterministic link exists, response either returns a citation with `origin: "inferred"` or explicitly abstains, never presents the inferred match as certain — in `backend/tests/integration/test_trace_doc_no_link.py`
@@ -77,12 +77,12 @@
 
 ### Implementation for User Story 1
 
-- [ ] T033 [US1] Implement `workspace_svc` (create workspace, enforce one workspace per user) in `backend/src/services/workspace_svc.py` (depends on T017)
-- [ ] T034 [US1] Implement `GitHubConnector` (auth, `ingest_full`: files/PRs/commits/issues/contributors, `normalize_artifact`) in `backend/src/connectors/github_connector.py` (depends on T025)
-- [ ] T035 [US1] Implement `NotionConnector` (auth, `ingest_full`: selected pages/blocks, `normalize_artifact`) in `backend/src/connectors/notion_connector.py` (depends on T025)
-- [ ] T036 [US1] Implement code chunking (function/class-boundary via `ast` for Python, heuristic boundary split for TS/JS, flat-text fallback otherwise) in `backend/src/services/chunking.py` (research.md §3)
+- [X] T033 [US1] Implement `workspace_svc` (create workspace, enforce one workspace per user) in `backend/src/services/workspace_svc.py` (depends on T017)
+- [X] T034 [US1] Implement `GitHubConnector` (auth, `ingest_full`: files/PRs/commits/issues/contributors, `normalize_artifact`) in `backend/src/connectors/github_connector.py` (depends on T025)
+- [X] T035 [US1] Implement `NotionConnector` (auth, `ingest_full`: selected pages/blocks, `normalize_artifact`) in `backend/src/connectors/notion_connector.py` (depends on T025)
+- [X] T036 [US1] Implement code chunking (function/class-boundary via `ast` for Python, heuristic boundary split for TS/JS, flat-text fallback otherwise) in `backend/src/services/chunking.py` (research.md §3)
 - [ ] T037 [US1] Implement `connector_svc` (dispatch to GitHub/Notion connectors, persist Connector rows, chunk + embed ingested content via `voyage_client`) in `backend/src/services/connector_svc.py` (depends on T034, T035, T036, T024)
-- [ ] T038 [US1] Implement `relationship_svc` deterministic-link extraction (bidirectional regex URL matching) in `backend/src/services/relationship_svc.py` (research.md §4)
+- [X] T038 [US1] Implement `relationship_svc` deterministic-link extraction (bidirectional regex URL matching) in `backend/src/services/relationship_svc.py` (research.md §4)
 - [ ] T039 [US1] Implement `ingestion_svc` (enqueues Job rows; job worker calls `connector_svc.ingest` then `relationship_svc` extraction) in `backend/src/services/ingestion_svc.py` (depends on T037, T038, T022)
 - [ ] T040 [US1] Implement `retrieval_svc` (full-text + `pgvector` similarity search over artifacts) in `backend/src/services/retrieval_svc.py` (depends on T011)
 - [ ] T041 [US1] Implement `answer_svc` (grounded generation via `claude_client`, `origin` labeling per citation, deterministic-first evidence ordering — retrieved evidence assembled into a distinct evidence packet passed to `claude_client` as data, never merged into prompt instructions, per FR-015/Constitution Principle III) in `backend/src/services/answer_svc.py` (depends on T040, T023, T038)

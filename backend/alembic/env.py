@@ -6,7 +6,6 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-
 from src.core.config import get_settings
 from src.core.db import Base
 from src.models import Artifact, Connector, Job, Relationship, Workspace  # noqa: F401
