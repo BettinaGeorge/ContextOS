@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.llm.claude_client import ClaudeClient, EvidenceItem
+from src.llm.groq_client import EvidenceItem, GroqClient
 from src.models.artifact import Artifact
 from src.models.relationship import RelationshipOrigin
 from src.repositories.artifact_repository import ArtifactRepository
@@ -43,14 +43,14 @@ class AnswerService:
     def __init__(
         self,
         session: AsyncSession,
-        claude_client: ClaudeClient | None = None,
+        groq_client: GroqClient | None = None,
         retrieval_service: RetrievalService | None = None,
     ):
         self._session = session
         self._artifacts = ArtifactRepository(session)
         self._relationships = RelationshipRepository(session)
         self._retrieval = retrieval_service or RetrievalService(session)
-        self._claude = claude_client or ClaudeClient()
+        self._groq = groq_client or GroqClient()
 
     async def answer_question(
         self, workspace_id: uuid.UUID, question: str, notion_doc_url: str | None = None
@@ -63,7 +63,7 @@ class AnswerService:
                 abstained=True,
             )
 
-        raw_answer = self._claude.generate_grounded_answer(question, list(evidence_by_id.values()))
+        raw_answer = self._groq.generate_grounded_answer(question, list(evidence_by_id.values()))
 
         if INSUFFICIENT_EVIDENCE_MARKER in raw_answer:
             cleaned = raw_answer.replace(INSUFFICIENT_EVIDENCE_MARKER, "").strip()

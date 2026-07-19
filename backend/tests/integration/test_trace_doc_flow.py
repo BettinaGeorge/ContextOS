@@ -24,10 +24,10 @@ class FakeVoyageClient:
         return [0.1] * EMBEDDING_DIM
 
 
-class FakeClaudeClient:
+class FakeGroqClient:
     """Simulates a well-behaved model that cites whatever PR-typed evidence
     item it's given — good enough to prove the pipeline wires evidence
-    through correctly without needing a live Anthropic call."""
+    through correctly without needing a live Groq call."""
 
     def generate_grounded_answer(self, question, evidence, model=None):
         pr_items = [e for e in evidence if e.artifact_type == "pull_request"]
@@ -149,7 +149,7 @@ async def test_connect_ingest_and_ask_returns_deterministic_citation(db_session)
     # --- Scenario 2: ask a question, get a deterministically-cited answer ---
     retrieval = RetrievalService(db_session, voyage_client=FakeVoyageClient())
     answer_svc = AnswerService(
-        db_session, claude_client=FakeClaudeClient(), retrieval_service=retrieval
+        db_session, groq_client=FakeGroqClient(), retrieval_service=retrieval
     )
     result = await answer_svc.answer_question(
         workspace.id,

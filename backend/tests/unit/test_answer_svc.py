@@ -8,7 +8,7 @@ from src.services.answer_svc import AnswerService
 from src.services.retrieval_svc import RetrievalService
 
 
-class FakeClaudeClient:
+class FakeGroqClient:
     def __init__(self, response: str):
         self._response = response
 
@@ -21,9 +21,9 @@ class FakeVoyageClient:
         return [0.1] * EMBEDDING_DIM
 
 
-def _answer_service(db_session, claude_client) -> AnswerService:
+def _answer_service(db_session, groq_client) -> AnswerService:
     retrieval = RetrievalService(db_session, voyage_client=FakeVoyageClient())
-    return AnswerService(db_session, claude_client=claude_client, retrieval_service=retrieval)
+    return AnswerService(db_session, groq_client=groq_client, retrieval_service=retrieval)
 
 
 async def _make_workspace(db_session, owner):
@@ -38,11 +38,11 @@ async def _make_workspace(db_session, owner):
 async def test_abstains_with_zero_evidence_without_calling_llm(db_session):
     workspace = await _make_workspace(db_session, "user-empty")
 
-    class ExplodingClaudeClient:
+    class ExplodingGroqClient:
         def generate_grounded_answer(self, *a, **kw):
             raise AssertionError("must not call the LLM when there is no evidence at all")
 
-    result = await _answer_service(db_session, ExplodingClaudeClient()).answer_question(
+    result = await _answer_service(db_session, ExplodingGroqClient()).answer_question(
         workspace.id, "What does this do?"
     )
     assert result.abstained is True
@@ -85,7 +85,7 @@ async def test_deterministic_citation_labeled_explicit(db_session):
     )
 
     fake_response = f"The spinner is implemented in the linked PR. [cite:{pr.id}]"
-    result = await _answer_service(db_session, FakeClaudeClient(fake_response)).answer_question(
+    result = await _answer_service(db_session, FakeGroqClient(fake_response)).answer_question(
         workspace.id, "What implements the spinner?", notion_doc_url="https://notion.so/page-1"
     )
 
@@ -112,7 +112,7 @@ async def test_insufficient_evidence_marker_triggers_abstention(db_session):
     await db_session.commit()
 
     fake_response = "[INSUFFICIENT_EVIDENCE] Nothing in the evidence addresses this question."
-    result = await _answer_service(db_session, FakeClaudeClient(fake_response)).answer_question(
+    result = await _answer_service(db_session, FakeGroqClient(fake_response)).answer_question(
         workspace.id,
         "What implements the flux capacitor?",
         notion_doc_url="https://notion.so/page-2",
@@ -139,7 +139,7 @@ async def test_hallucinated_citation_id_is_dropped_and_forces_abstention(db_sess
 
     # Model cites an artifact_id that was never in the evidence packet.
     fake_response = "This is implemented somewhere. [cite:00000000-0000-0000-0000-000000000000]"
-    result = await _answer_service(db_session, FakeClaudeClient(fake_response)).answer_question(
+    result = await _answer_service(db_session, FakeGroqClient(fake_response)).answer_question(
         workspace.id, "some question", notion_doc_url="https://notion.so/page-3"
     )
     # FR-013: the fabricated id must never surface as a real citation, and a

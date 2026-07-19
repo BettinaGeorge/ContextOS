@@ -1,17 +1,21 @@
 from dataclasses import dataclass
 
-import anthropic
+from groq import Groq
 
 from src.core.config import get_settings
 
-MODEL_DEFAULT = "claude-sonnet-4-5"
-MODEL_FAST = "claude-haiku-4-5"
+# Free-tier, no-card-required hosted inference (ADR-001 revision — see
+# "Alternatives considered" for why Claude/Anthropic was ruled out). Llama
+# 3.3 70B is the general-purpose default; 3.1 8B is available as a faster/
+# higher-rate-limit fallback if needed.
+MODEL_DEFAULT = "llama-3.3-70b-versatile"
+MODEL_FAST = "llama-3.1-8b-instant"
 
 # Fixed instructions only — this string never has retrieved content
 # concatenated into it. That is the isolation boundary FR-015 / Constitution
 # Principle III requires: untrusted content lives only in the evidence
-# block of the user turn (see build_user_turn below), clearly delimited and
-# explicitly labeled as data, never as instructions.
+# block of the user turn (see _build_evidence_block below), clearly
+# delimited and explicitly labeled as data, never as instructions.
 SYSTEM_PROMPT = """You are ContextOS's answer-generation component. You answer questions \
 using ONLY the evidence provided to you inside the <evidence> block of the user's message.
 
@@ -54,14 +58,19 @@ def _build_evidence_block(evidence: list[EvidenceItem]) -> str:
     return "<evidence>\n" + "\n".join(items) + "\n</evidence>"
 
 
-class ClaudeClient:
+class GroqClient:
     """Single-provider generation interface (ADR-001) — intentionally not a
     multi-provider abstraction. If a second provider is ever needed, this
-    module's call sites don't change, only its internals."""
+    module's call sites don't change, only its internals.
+
+    Groq's API is OpenAI-compatible (messages list with a system role,
+    rather than Claude's separate system= parameter) — the only structural
+    difference from the original Claude implementation this replaced.
+    """
 
     def __init__(self) -> None:
         settings = get_settings()
-        self._client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        self._client = Groq(api_key=settings.groq_api_key)
 
     def generate_grounded_answer(
         self, question: str, evidence: list[EvidenceItem], model: str = MODEL_DEFAULT
@@ -69,10 +78,12 @@ class ClaudeClient:
         evidence_block = _build_evidence_block(evidence)
         user_turn = f"<question>\n{question}\n</question>\n\n{evidence_block}"
 
-        response = self._client.messages.create(
+        response = self._client.chat.completions.create(
             model=model,
             max_tokens=1024,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_turn}],
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_turn},
+            ],
         )
-        return "".join(block.text for block in response.content if block.type == "text")
+        return response.choices[0].message.content or ""

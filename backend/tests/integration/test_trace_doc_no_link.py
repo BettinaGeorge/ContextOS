@@ -18,7 +18,7 @@ class FakeVoyageClient:
         return [0.1] * EMBEDDING_DIM
 
 
-class FakeClaudeClientCitesInferred:
+class FakeGroqClientCitesInferred:
     """A model that finds the semantically-related file and cites it,
     correctly relying on the evidence's origin="inferred" label rather than
     claiming certainty."""
@@ -36,7 +36,7 @@ class FakeClaudeClientCitesInferred:
         return f"Possibly related: the spinner logic. [cite:{code_items[0].artifact_id}]"
 
 
-class FakeClaudeClientAbstains:
+class FakeGroqClientAbstains:
     def generate_grounded_answer(self, question, evidence, model=None):
         return "[INSUFFICIENT_EVIDENCE] No confident match found in the evidence."
 
@@ -78,7 +78,7 @@ async def test_no_deterministic_link_returns_inferred_citation_not_explicit(db_s
 
     retrieval = RetrievalService(db_session, voyage_client=FakeVoyageClient())
     answer_svc = AnswerService(
-        db_session, claude_client=FakeClaudeClientCitesInferred(), retrieval_service=retrieval
+        db_session, groq_client=FakeGroqClientCitesInferred(), retrieval_service=retrieval
     )
     result = await answer_svc.answer_question(
         workspace.id, "What implements the spinner?", notion_doc_url=doc.source_url
@@ -96,7 +96,7 @@ async def test_no_deterministic_link_and_model_uncertain_abstains(db_session):
 
     retrieval = RetrievalService(db_session, voyage_client=FakeVoyageClient())
     answer_svc = AnswerService(
-        db_session, claude_client=FakeClaudeClientAbstains(), retrieval_service=retrieval
+        db_session, groq_client=FakeGroqClientAbstains(), retrieval_service=retrieval
     )
     result = await answer_svc.answer_question(
         workspace.id, "What implements the spinner?", notion_doc_url=doc.source_url

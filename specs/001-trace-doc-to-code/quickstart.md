@@ -5,7 +5,7 @@ A runnable guide to prove the feature works end-to-end against the acceptance sc
 ## Prerequisites
 
 - A Supabase project (free tier) with the pgvector extension enabled — provides `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_JWT_SECRET`.
-- An Anthropic API key with the spend cap set per ADR-001 (recommend $8) — `ANTHROPIC_API_KEY`.
+- A Groq API key (free tier, no payment method required — ADR-002) — `GROQ_API_KEY`.
 - A Voyage AI API key — `VOYAGE_API_KEY`.
 - A GitHub OAuth App or personal access token with `repo` read scope — `GITHUB_TOKEN` (or `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET` if using OAuth).
 - A Notion internal integration token, shared with at least one real page — `NOTION_TOKEN`.

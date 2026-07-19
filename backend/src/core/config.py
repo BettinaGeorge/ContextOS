@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     supabase_anon_key: str = ""
     supabase_jwt_secret: str
 
-    anthropic_api_key: str
+    groq_api_key: str
     voyage_api_key: str
 
     github_token: str = ""

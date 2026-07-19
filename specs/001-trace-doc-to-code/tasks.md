@@ -21,11 +21,11 @@
 ## Phase 1: Setup
 
 - [X] T001 Create `backend/` and `frontend/` directories per plan.md's Project Structure
-- [X] T002 Initialize backend: `uv init`, add FastAPI, Pydantic v2, SQLAlchemy 2.0, Alembic, `pgvector`, Anthropic SDK, Voyage SDK, `supabase-py`, `httpx`, `notion-client`, `pytest`, `pytest-asyncio` to `backend/pyproject.toml`
+- [X] T002 Initialize backend: `uv init`, add FastAPI, Pydantic v2, SQLAlchemy 2.0, Alembic, `pgvector`, Groq SDK, Voyage SDK, `supabase-py`, `httpx`, `notion-client`, `pytest`, `pytest-asyncio` to `backend/pyproject.toml`
 - [X] T003 [P] Initialize frontend: Next.js 15 (App Router, TypeScript, Tailwind) via `pnpm create next-app` in `frontend/`, add shadcn/ui, `vitest`, React Testing Library
 - [X] T004 [P] Configure `ruff` (lint + format) in `backend/pyproject.toml`
 - [X] T005 [P] Configure `eslint` + `prettier` in `frontend/`
-- [X] T006 Create `.env.example` at repo root listing `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_JWT_SECRET`, `ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`, `GITHUB_TOKEN`, `NOTION_TOKEN` (per quickstart.md Prerequisites)
+- [X] T006 Create `.env.example` at repo root listing `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_JWT_SECRET`, `GROQ_API_KEY`, `VOYAGE_API_KEY`, `GITHUB_TOKEN`, `NOTION_TOKEN` (per quickstart.md Prerequisites)
 
 ---
 
@@ -49,7 +49,7 @@
 - [X] T020 [P] Implement `connector_repository` in `backend/src/repositories/connector_repository.py`, **encrypting the access token before every write and decrypting only at the point of use — a connector row is never persisted with a plaintext token, even transiently** (FR-016, Constitution Principle III)
 - [X] T021 [P] Implement `job_repository` in `backend/src/repositories/job_repository.py`
 - [X] T022 Implement the in-process job-worker polling loop in `backend/src/core/job_worker.py`, started on app startup (research.md §1; depends on T021)
-- [X] T023 [P] Implement the Claude client (single-provider interface) in `backend/src/llm/claude_client.py`, **structuring every request so retrieved content is passed as a distinct data parameter, never string-concatenated into the system prompt** (FR-015, Constitution Principle III)
+- [X] T023 [P] Implement the Groq client (single-provider interface) in `backend/src/llm/groq_client.py`, **structuring every request so retrieved content is passed as a distinct data parameter, never string-concatenated into the system prompt** (FR-015, Constitution Principle III)
 - [X] T024 [P] Implement the Voyage embeddings client in `backend/src/llm/voyage_client.py`
 - [X] T025 [P] Implement the base connector interface (`authenticate`, `ingest_full`, `normalize_artifact`, `normalize_relationship`, `health_check`) in `backend/src/connectors/base.py`
 - [X] T026 [P] Scaffold the Next.js app shell and typed REST client skeleton in `frontend/src/lib/api.ts`
@@ -85,7 +85,7 @@
 - [X] T038 [US1] Implement `relationship_svc` deterministic-link extraction (bidirectional regex URL matching) in `backend/src/services/relationship_svc.py` (research.md §4)
 - [X] T039 [US1] Implement `ingestion_svc` (enqueues Job rows; job worker calls `connector_svc.ingest` then `relationship_svc` extraction) in `backend/src/services/ingestion_svc.py` (depends on T037, T038, T022)
 - [X] T040 [US1] Implement `retrieval_svc` (full-text + `pgvector` similarity search over artifacts) in `backend/src/services/retrieval_svc.py` (depends on T011)
-- [X] T041 [US1] Implement `answer_svc` (grounded generation via `claude_client`, `origin` labeling per citation, deterministic-first evidence ordering — retrieved evidence assembled into a distinct evidence packet passed to `claude_client` as data, never merged into prompt instructions, per FR-015/Constitution Principle III) in `backend/src/services/answer_svc.py` (depends on T040, T023, T038)
+- [X] T041 [US1] Implement `answer_svc` (grounded generation via `groq_client`, `origin` labeling per citation, deterministic-first evidence ordering — retrieved evidence assembled into a distinct evidence packet passed to `groq_client` as data, never merged into prompt instructions, per FR-015/Constitution Principle III) in `backend/src/services/answer_svc.py` (depends on T040, T023, T038)
 - [X] T042 [US1] Implement `POST /connectors/github`, `POST /connectors/notion`, `GET /connectors/{id}/status` in `backend/src/api/connectors.py` (depends on T037)
 - [X] T043 [US1] Implement `POST /ingest/{connector_id}`, `GET /ingest/{job_id}/status` in `backend/src/api/ingest.py` (depends on T039)
 - [X] T044 [US1] Implement `POST /ask` in `backend/src/api/ask.py` (depends on T041)
@@ -141,11 +141,11 @@
 ## Phase 6: Polish & Cross-Cutting Concerns
 
 - [ ] T057 [P] **Regression check**: verify `connector_repository` (T020) never persists a plaintext token — add a test asserting the stored value differs from the raw input and round-trips correctly through decryption, in `backend/tests/unit/test_token_encryption.py`
-- [ ] T058 [P] **Regression check**: verify `answer_svc`/`claude_client` (T041, T023) isolation — add a test asserting retrieved artifact content never appears inside the system-prompt string sent to the model, in `backend/tests/unit/test_prompt_isolation.py`
+- [ ] T058 [P] **Regression check**: verify `answer_svc`/`groq_client` (T041, T023) isolation — add a test asserting retrieved artifact content never appears inside the system-prompt string sent to the model, in `backend/tests/unit/test_prompt_isolation.py`
 - [ ] T059 [P] Add workspace-isolation tests across all repositories (Constitution Principle VI) in `backend/tests/unit/test_workspace_isolation.py`
 - [ ] T060 Update `docs/roadmap.md`'s Phase 1 checklist and `CLAUDE.md`'s Commands section with real backend/frontend commands now that both exist
 - [ ] T061 Run the full quickstart.md validation pass — all 6 scenarios, ≥10 hand-written questions total (PRD §7 SC-002/SC-003)
-- [ ] T062 Verify the Anthropic Console spend cap (~$8) and Voyage usage limits are actually configured before any real ingestion run (ADR-001)
+- [ ] T062 Verify Groq's free-tier rate limits are understood (no spend cap needed — there's no billing relationship, ADR-002) and Voyage usage limits are configured before any real ingestion run
 
 ---
 

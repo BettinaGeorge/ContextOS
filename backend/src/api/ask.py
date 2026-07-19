@@ -32,7 +32,7 @@ class AskResponse(BaseModel):
 def get_answer_service(db: AsyncSession = Depends(get_db)) -> AnswerService:
     """A real dependency (not a bare instantiation inside the endpoint) so
     tests can override it via app.dependency_overrides with a fake
-    Claude/Voyage-backed instance instead of hitting live APIs."""
+    Groq/Voyage-backed instance instead of hitting live APIs."""
     return AnswerService(db)
 
 
