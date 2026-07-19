@@ -70,14 +70,16 @@ backend/
 │   │   ├── workspaces.py       # POST /workspaces, GET /workspaces/{id}
 │   │   ├── connectors.py       # POST /connectors/github, POST /connectors/notion, GET /connectors/{id}/status
 │   │   ├── ingest.py           # POST /ingest/{connector_id}, GET /ingest/{job_id}/status
-│   │   └── ask.py              # POST /ask
+│   │   ├── ask.py              # POST /ask
+│   │   └── errors.py           # shared error-response shape (contracts/api.md) as FastAPI exception handlers
 │   ├── services/
 │   │   ├── workspace_svc.py
 │   │   ├── connector_svc.py    # dispatches to connectors/github_connector.py, connectors/notion_connector.py
 │   │   ├── ingestion_svc.py    # enqueues + processes jobs table rows
 │   │   ├── retrieval_svc.py    # full-text + vector search
 │   │   ├── relationship_svc.py # deterministic link extraction, semantic fallback
-│   │   └── answer_svc.py       # grounded generation + citation validation + abstention
+│   │   ├── answer_svc.py       # grounded generation + citation validation + abstention
+│   │   └── chunking.py         # function/class-boundary code chunking, flat-text fallback (research.md §3)
 │   ├── repositories/
 │   │   ├── workspace_repository.py
 │   │   ├── artifact_repository.py
