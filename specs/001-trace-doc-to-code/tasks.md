@@ -20,12 +20,12 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Create `backend/` and `frontend/` directories per plan.md's Project Structure
-- [ ] T002 Initialize backend: `uv init`, add FastAPI, Pydantic v2, SQLAlchemy 2.0, Alembic, `pgvector`, Anthropic SDK, Voyage SDK, `supabase-py`, `httpx`, `notion-client`, `pytest`, `pytest-asyncio` to `backend/pyproject.toml`
-- [ ] T003 [P] Initialize frontend: Next.js 15 (App Router, TypeScript, Tailwind) via `pnpm create next-app` in `frontend/`, add shadcn/ui, `vitest`, React Testing Library
-- [ ] T004 [P] Configure `ruff` (lint + format) in `backend/pyproject.toml`
-- [ ] T005 [P] Configure `eslint` + `prettier` in `frontend/`
-- [ ] T006 Create `.env.example` at repo root listing `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_JWT_SECRET`, `ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`, `GITHUB_TOKEN`, `NOTION_TOKEN` (per quickstart.md Prerequisites)
+- [X] T001 Create `backend/` and `frontend/` directories per plan.md's Project Structure
+- [X] T002 Initialize backend: `uv init`, add FastAPI, Pydantic v2, SQLAlchemy 2.0, Alembic, `pgvector`, Anthropic SDK, Voyage SDK, `supabase-py`, `httpx`, `notion-client`, `pytest`, `pytest-asyncio` to `backend/pyproject.toml`
+- [X] T003 [P] Initialize frontend: Next.js 15 (App Router, TypeScript, Tailwind) via `pnpm create next-app` in `frontend/`, add shadcn/ui, `vitest`, React Testing Library
+- [X] T004 [P] Configure `ruff` (lint + format) in `backend/pyproject.toml`
+- [X] T005 [P] Configure `eslint` + `prettier` in `frontend/`
+- [X] T006 Create `.env.example` at repo root listing `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_JWT_SECRET`, `ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`, `GITHUB_TOKEN`, `NOTION_TOKEN` (per quickstart.md Prerequisites)
 
 ---
 
@@ -33,27 +33,27 @@
 
 **⚠️ CRITICAL**: No user story work begins until this phase is complete.
 
-- [ ] T007 Configure SQLAlchemy engine/session in `backend/src/core/db.py`
-- [ ] T008 Configure Alembic migrations framework in `backend/alembic/`
-- [ ] T009 [P] Create Workspace model in `backend/src/models/workspace.py` (data-model.md)
-- [ ] T010 [P] Create Connector model in `backend/src/models/connector.py`, including the `(workspace_id, source_system)` unique constraint
-- [ ] T011 [P] Create Artifact model (with `pgvector` embedding column) in `backend/src/models/artifact.py`, `source_url` non-nullable
-- [ ] T012 [P] Create Relationship model in `backend/src/models/relationship.py`, with a DB check constraint restricting `relationship_origin` to `explicit`/`metadata-derived` for any row written by Phase 1 code paths
-- [ ] T013 [P] Create Job model in `backend/src/models/job.py`
-- [ ] T014 Generate and apply the initial Alembic migration for all 5 tables (depends on T009-T013)
-- [ ] T015 Implement Supabase JWT verification dependency in `backend/src/core/auth.py` (research.md §2)
-- [ ] T016 Implement FastAPI app entrypoint and router registration in `backend/src/main.py`
-- [ ] T017 [P] Implement `workspace_repository` in `backend/src/repositories/workspace_repository.py`
-- [ ] T018 [P] Implement `artifact_repository` in `backend/src/repositories/artifact_repository.py`
-- [ ] T019 [P] Implement `relationship_repository` in `backend/src/repositories/relationship_repository.py`
-- [ ] T020 [P] Implement `connector_repository` in `backend/src/repositories/connector_repository.py`, **encrypting the access token before every write and decrypting only at the point of use — a connector row is never persisted with a plaintext token, even transiently** (FR-016, Constitution Principle III)
-- [ ] T021 [P] Implement `job_repository` in `backend/src/repositories/job_repository.py`
-- [ ] T022 Implement the in-process job-worker polling loop in `backend/src/core/job_worker.py`, started on app startup (research.md §1; depends on T021)
-- [ ] T023 [P] Implement the Claude client (single-provider interface) in `backend/src/llm/claude_client.py`, **structuring every request so retrieved content is passed as a distinct data parameter, never string-concatenated into the system prompt** (FR-015, Constitution Principle III)
-- [ ] T024 [P] Implement the Voyage embeddings client in `backend/src/llm/voyage_client.py`
-- [ ] T025 [P] Implement the base connector interface (`authenticate`, `ingest_full`, `normalize_artifact`, `normalize_relationship`, `health_check`) in `backend/src/connectors/base.py`
-- [ ] T026 [P] Scaffold the Next.js app shell and typed REST client skeleton in `frontend/src/lib/api.ts`
-- [ ] T027 [P] Implement the shared error-response shape (contracts/api.md) as FastAPI exception handlers in `backend/src/api/errors.py`
+- [X] T007 Configure SQLAlchemy engine/session in `backend/src/core/db.py`
+- [X] T008 Configure Alembic migrations framework in `backend/alembic/`
+- [X] T009 [P] Create Workspace model in `backend/src/models/workspace.py` (data-model.md)
+- [X] T010 [P] Create Connector model in `backend/src/models/connector.py`, including the `(workspace_id, source_system)` unique constraint
+- [X] T011 [P] Create Artifact model (with `pgvector` embedding column) in `backend/src/models/artifact.py`, `source_url` non-nullable
+- [X] T012 [P] Create Relationship model in `backend/src/models/relationship.py`, with a DB check constraint restricting `relationship_origin` to `explicit`/`metadata-derived` for any row written by Phase 1 code paths
+- [X] T013 [P] Create Job model in `backend/src/models/job.py`
+- [X] T014 Generate and apply the initial Alembic migration for all 5 tables (depends on T009-T013)
+- [X] T015 Implement Supabase JWT verification dependency in `backend/src/core/auth.py` (research.md §2)
+- [X] T016 Implement FastAPI app entrypoint and router registration in `backend/src/main.py`
+- [X] T017 [P] Implement `workspace_repository` in `backend/src/repositories/workspace_repository.py`
+- [X] T018 [P] Implement `artifact_repository` in `backend/src/repositories/artifact_repository.py`
+- [X] T019 [P] Implement `relationship_repository` in `backend/src/repositories/relationship_repository.py`
+- [X] T020 [P] Implement `connector_repository` in `backend/src/repositories/connector_repository.py`, **encrypting the access token before every write and decrypting only at the point of use — a connector row is never persisted with a plaintext token, even transiently** (FR-016, Constitution Principle III)
+- [X] T021 [P] Implement `job_repository` in `backend/src/repositories/job_repository.py`
+- [X] T022 Implement the in-process job-worker polling loop in `backend/src/core/job_worker.py`, started on app startup (research.md §1; depends on T021)
+- [X] T023 [P] Implement the Claude client (single-provider interface) in `backend/src/llm/claude_client.py`, **structuring every request so retrieved content is passed as a distinct data parameter, never string-concatenated into the system prompt** (FR-015, Constitution Principle III)
+- [X] T024 [P] Implement the Voyage embeddings client in `backend/src/llm/voyage_client.py`
+- [X] T025 [P] Implement the base connector interface (`authenticate`, `ingest_full`, `normalize_artifact`, `normalize_relationship`, `health_check`) in `backend/src/connectors/base.py`
+- [X] T026 [P] Scaffold the Next.js app shell and typed REST client skeleton in `frontend/src/lib/api.ts`
+- [X] T027 [P] Implement the shared error-response shape (contracts/api.md) as FastAPI exception handlers in `backend/src/api/errors.py`
 
 **Checkpoint**: Foundation ready — user story work can begin.
 
