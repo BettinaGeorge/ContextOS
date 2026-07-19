@@ -126,15 +126,17 @@
 
 **Independent Test**: quickstart.md scenario 6.
 
+**Scope note**: implementing T056 surfaced a real gap not caught during planning — the Ingestion status page needs to discover which connectors exist for a workspace, but the original contract only had `GET /connectors/{id}/status` (requires already knowing the id) with no list endpoint. Added `GET /connectors` (documented in contracts/api.md) plus `ConnectorRepository.list_by_workspace()` to close it, with its own contract test. Also split the generic `failed` status into `failed` vs `needs_reconnect` for real (new `ConnectorAuthError` in connectors/base.py, raised specifically on GitHub 401/403 and Notion's `unauthorized`/`restricted_resource` codes) — the data model already had `needs_reconnect` as a distinct value but nothing ever produced it until now.
+
 ### Tests for User Story 3
 
-- [ ] T053 [P] [US3] Contract test for `GET /connectors/{id}/status` transitions in `backend/tests/contract/test_connector_status.py`
-- [ ] T054 [P] [US3] Integration test: forced ingestion failure surfaces a non-null `error_message` in `backend/tests/integration/test_ingestion_failure.py`
+- [X] T053 [P] [US3] Contract test for `GET /connectors/{id}/status` transitions — implemented as `test_connector_status_reflects_connected_then_failed_transition` in `backend/tests/contract/test_connectors.py` (same file as the other connector contract tests; also added `test_list_connectors_returns_both_after_connecting` for the new list endpoint)
+- [X] T054 [P] [US3] Integration test: forced ingestion failure surfaces a non-null `error_message` — implemented in `backend/tests/integration/test_ingestion_failure.py`, covering both `needs_reconnect` (auth failure) and `failed` (generic failure) paths distinctly, plus dedicated unit tests in `test_github_connector.py`/`test_notion_connector.py` proving each connector raises `ConnectorAuthError` on a real 401/`unauthorized` response
 
 ### Implementation for User Story 3
 
-- [ ] T055 [US3] Add failure / `needs_reconnect` status handling and `error_message` capture to `ingestion_svc` and `job_worker` in `backend/src/services/ingestion_svc.py`, `backend/src/core/job_worker.py` (extends T039, T022)
-- [ ] T056 [US3] Implement the Ingestion status page (polls connector/job status, renders in-progress/complete/failed) in `frontend/src/app/status/page.tsx` (depends on T042, T043)
+- [X] T055 [US3] Add failure / `needs_reconnect` status handling and `error_message` capture to `ingestion_svc` and `job_worker` in `backend/src/services/ingestion_svc.py`, `backend/src/core/job_worker.py` (extends T039, T022)
+- [X] T056 [US3] Implement the Ingestion status page (polls connector/job status, renders in-progress/complete/failed) in `frontend/src/app/status/page.tsx` (depends on T042, T043)
 
 **Checkpoint**: All three user stories independently functional — run the full quickstart.md.
 

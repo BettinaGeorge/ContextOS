@@ -27,6 +27,15 @@ class ConnectorHealth:
     detail: str | None = None
 
 
+class ConnectorAuthError(Exception):
+    """Raised specifically when authenticate() fails because the credential
+    itself is invalid/expired/revoked (e.g. GitHub 401/403, Notion
+    "unauthorized"). ingestion_svc (T055) maps this to
+    ConnectorStatus.needs_reconnect instead of the generic `failed`, since
+    the user's actual next step differs: reconnect with a new token, not
+    just retry."""
+
+
 class BaseConnector(ABC):
     """Common interface every connector implements (handoff §11), so core
     retrieval/reasoning code never depends on GitHub- or Notion-specific

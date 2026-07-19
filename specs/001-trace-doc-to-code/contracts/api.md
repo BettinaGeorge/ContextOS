@@ -32,6 +32,12 @@ Begins a Notion connection. Same 409 rule as above, scoped to `source_system = n
 **Request**: `{ "integration_token": "string", "page_ids": ["string", ...] }`
 **202**: `{ "connector_id": "string", "status": "connected" }`
 
+## `GET /connectors`
+
+Added post-hoc for T056 (US3) — not in the original contract, but needed once the Ingestion status page had to discover which connectors exist for a workspace rather than just check one by ID.
+
+**200**: array of the same shape as `GET /connectors/{connector_id}/status` below. `[]` if none connected yet.
+
 ## `GET /connectors/{connector_id}/status`
 
 **200**

@@ -64,6 +64,12 @@ class ConnectorRepository:
         )
         return result.scalar_one_or_none()
 
+    async def list_by_workspace(self, workspace_id: uuid.UUID) -> list[Connector]:
+        result = await self._session.execute(
+            select(Connector).where(Connector.workspace_id == workspace_id)
+        )
+        return list(result.scalars().all())
+
     async def get_by_workspace_and_source(
         self, workspace_id: uuid.UUID, source_system: SourceSystem
     ) -> Connector | None:

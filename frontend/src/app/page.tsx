@@ -146,6 +146,9 @@ export default function WorkspacePage() {
                 <Link href="/connect" className={buttonVariants({ variant: "outline" })}>
                   Connect tools
                 </Link>
+                <Link href="/status" className={buttonVariants({ variant: "outline" })}>
+                  Ingestion status
+                </Link>
                 <Link href="/ask" className={buttonVariants({ variant: "outline" })}>
                   Ask a question
                 </Link>

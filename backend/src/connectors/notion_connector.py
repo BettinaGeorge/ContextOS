@@ -3,9 +3,14 @@ from datetime import datetime
 from typing import Any
 
 from notion_client import AsyncClient
-from notion_client.errors import APIResponseError
+from notion_client.errors import APIErrorCode, APIResponseError
 
-from src.connectors.base import BaseConnector, ConnectorHealth, NormalizedArtifact
+from src.connectors.base import (
+    BaseConnector,
+    ConnectorAuthError,
+    ConnectorHealth,
+    NormalizedArtifact,
+)
 
 # Block types whose rich_text we extract as plain content (research.md §3:
 # Notion pages are chunked by structural boundaries, not fixed-size splits —
@@ -43,6 +48,8 @@ class NotionConnector(BaseConnector):
         try:
             await client.users.me()
         except APIResponseError as exc:
+            if exc.code in (APIErrorCode.Unauthorized, APIErrorCode.RestrictedResource):
+                raise ConnectorAuthError(f"Notion rejected the token: {exc}") from exc
             raise ConnectionError(f"Notion authentication failed: {exc}") from exc
         finally:
             await client.aclose()

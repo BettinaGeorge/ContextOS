@@ -106,6 +106,11 @@ export function getConnectorStatus(
   return request<ConnectorStatusResponse>(`/connectors/${connectorId}/status`, { token });
 }
 
+// --- GET /connectors (list) ---
+export function listConnectors(token: string): Promise<ConnectorStatusResponse[]> {
+  return request<ConnectorStatusResponse[]>("/connectors", { token });
+}
+
 // --- POST /ingest/{connector_id}, GET /ingest/{job_id}/status ---
 export interface IngestJobResponse {
   job_id: string;

@@ -5,7 +5,12 @@ from typing import Any
 
 import httpx
 
-from src.connectors.base import BaseConnector, ConnectorHealth, NormalizedArtifact
+from src.connectors.base import (
+    BaseConnector,
+    ConnectorAuthError,
+    ConnectorHealth,
+    NormalizedArtifact,
+)
 
 GITHUB_API_BASE = "https://api.github.com"
 
@@ -57,6 +62,11 @@ class GitHubConnector(BaseConnector):
     async def authenticate(self) -> None:
         async with self._client() as client:
             response = await client.get(f"/repos/{self.owner}/{self.repo}")
+            if response.status_code in (401, 403):
+                raise ConnectorAuthError(
+                    f"GitHub rejected the token (HTTP {response.status_code}) for "
+                    f"{self.owner}/{self.repo}"
+                )
             response.raise_for_status()
 
     async def health_check(self) -> ConnectorHealth:

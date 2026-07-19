@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.connectors.base import ConnectorAuthError
 from src.core.job_worker import register_handler
 from src.models.connector import ConnectorStatus
 from src.models.job import Job, JobType
@@ -46,9 +47,17 @@ async def _handle_ingestion_job(job: Job, session: AsyncSession) -> None:
         await connector_repo.update_status(
             connector, ConnectorStatus.complete, last_ingested_at=datetime.now(UTC)
         )
+    except ConnectorAuthError as exc:
+        # T055: distinguish "the credential itself is bad" from other
+        # failures — the user's next step is genuinely different (reconnect
+        # with a new token, not just retry the same one).
+        await connector_repo.update_status(
+            connector, ConnectorStatus.needs_reconnect, error_message=str(exc)
+        )
+        raise
     except Exception as exc:
-        # US3 (T055 extends this): surface the failure on the connector too,
-        # not just the job row, so GET /connectors/{id}/status reflects it.
+        # Surface the failure on the connector too, not just the job row, so
+        # GET /connectors/{id}/status reflects it.
         await connector_repo.update_status(
             connector, ConnectorStatus.failed, error_message=str(exc)
         )

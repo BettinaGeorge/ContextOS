@@ -4,6 +4,7 @@ import httpx
 import pytest
 import respx
 
+from src.connectors.base import ConnectorAuthError
 from src.connectors.github_connector import GitHubConnector
 
 
@@ -26,6 +27,22 @@ async def test_authenticate_succeeds_on_200(connector):
 async def test_authenticate_raises_on_404(connector):
     respx.get("https://api.github.com/repos/acme/widgets").mock(return_value=httpx.Response(404))
     with pytest.raises(httpx.HTTPStatusError):
+        await connector.authenticate()
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_authenticate_raises_connector_auth_error_on_401(connector):
+    respx.get("https://api.github.com/repos/acme/widgets").mock(return_value=httpx.Response(401))
+    with pytest.raises(ConnectorAuthError):
+        await connector.authenticate()
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_authenticate_raises_connector_auth_error_on_403(connector):
+    respx.get("https://api.github.com/repos/acme/widgets").mock(return_value=httpx.Response(403))
+    with pytest.raises(ConnectorAuthError):
         await connector.authenticate()
 
 

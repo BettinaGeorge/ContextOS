@@ -2,6 +2,7 @@ import httpx
 import pytest
 import respx
 
+from src.connectors.base import ConnectorAuthError
 from src.connectors.notion_connector import NotionConnector, extract_github_links
 
 
@@ -17,6 +18,24 @@ async def test_authenticate_succeeds(connector):
         return_value=httpx.Response(200, json={"id": "user-1", "type": "bot"})
     )
     await connector.authenticate()  # should not raise
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_authenticate_raises_connector_auth_error_on_unauthorized(connector):
+    respx.get("https://api.notion.com/v1/users/me").mock(
+        return_value=httpx.Response(
+            401,
+            json={
+                "object": "error",
+                "status": 401,
+                "code": "unauthorized",
+                "message": "API token is invalid.",
+            },
+        )
+    )
+    with pytest.raises(ConnectorAuthError):
+        await connector.authenticate()
 
 
 @pytest.mark.asyncio

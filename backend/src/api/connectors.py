@@ -44,6 +44,18 @@ async def _get_owned_workspace(db: AsyncSession, user: CurrentUser):
     return workspace
 
 
+def _to_status_response(connector) -> ConnectorStatusResponse:
+    return ConnectorStatusResponse(
+        connector_id=str(connector.id),
+        source_system=connector.source_system,
+        status=connector.status,
+        last_ingested_at=connector.last_ingested_at.isoformat()
+        if connector.last_ingested_at
+        else None,
+        error_message=connector.error_message,
+    )
+
+
 @router.post("/github", response_model=ConnectorCreatedResponse, status_code=202)
 async def connect_github(
     body: ConnectGithubRequest,
@@ -82,6 +94,19 @@ async def connect_notion(
     return ConnectorCreatedResponse(connector_id=str(connector.id), status=connector.status)
 
 
+@router.get("", response_model=list[ConnectorStatusResponse])
+async def list_connectors(
+    user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[ConnectorStatusResponse]:
+    """Not in the original contracts/api.md — added for T056 (US3), the
+    Ingestion status page needs a way to discover which connectors exist for
+    the workspace before it can poll each one's status individually."""
+    workspace = await _get_owned_workspace(db, user)
+    connectors = await ConnectorRepository(db).list_by_workspace(workspace.id)
+    return [_to_status_response(c) for c in connectors]
+
+
 @router.get("/{connector_id}/status", response_model=ConnectorStatusResponse)
 async def connector_status(
     connector_id: str,
@@ -92,12 +117,4 @@ async def connector_status(
     connector = await ConnectorRepository(db).get_by_id(workspace.id, UUID(connector_id))
     if connector is None:
         raise NotFoundError(error="connector_not_found")
-    return ConnectorStatusResponse(
-        connector_id=str(connector.id),
-        source_system=connector.source_system,
-        status=connector.status,
-        last_ingested_at=connector.last_ingested_at.isoformat()
-        if connector.last_ingested_at
-        else None,
-        error_message=connector.error_message,
-    )
+    return _to_status_response(connector)
