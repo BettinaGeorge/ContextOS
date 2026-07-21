@@ -12,16 +12,16 @@ Phased against the scope decisions in `docs/prd.md`. Each phase should be functi
 
 Scope defined in `docs/prd.md` §4. Target: Friday, 2026-07-24.
 
-- Auth + single workspace creation
-- GitHub connector: OAuth/PAT, single repo, full ingestion (files, PRs, commits, issues)
-- Notion connector: single workspace/integration, full ingestion of selected pages
-- Common artifact model (`explicit` + `metadata-derived` relationships only)
-- Retrieval: full-text + vector (pgvector), no graph traversal yet
-- "Trace a spec/doc to code" workflow, end to end
-- Citations on every answer; explicit abstention when evidence is insufficient
-- Manual validation against the ~10-question set in `docs/prd.md` §7
+- [x] Auth + single workspace creation
+- [x] GitHub connector: OAuth/PAT, single repo, full ingestion (files, PRs, commits, issues)
+- [x] Notion connector: single workspace/integration, full ingestion of selected pages
+- [x] Common artifact model (`explicit` + `metadata-derived` relationships only)
+- [x] Retrieval: full-text + vector (pgvector), no graph traversal yet
+- [x] "Trace a spec/doc to code" workflow, end to end
+- [x] Citations on every answer; explicit abstention when evidence is insufficient
+- [ ] Manual validation against the ~10-question set in `docs/prd.md` §7 — tracked as T061 in `specs/001-trace-doc-to-code/tasks.md`
 
-**Exit criteria:** success criteria in PRD §7 (Phase 1 bar) are met.
+**Exit criteria:** success criteria in PRD §7 (Phase 1 bar) are met — pending the manual validation pass above.
 
 ## Phase 2 — Harden the core loop
 

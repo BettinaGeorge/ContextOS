@@ -104,9 +104,29 @@ Mapped to Spec Kit commands: `/speckit-clarify` (if needed) → `/speckit-specif
 
 ## Commands
 
-Not yet applicable — `backend/` and `frontend/` haven't been created. This section will be filled in with real commands (install, format, lint, test, run) as soon as the Phase 1 spec (`specs/001-phase1-mvp/`) is implemented, per ADR-001:
+### Backend (`backend/`, run via `uv`)
 
-- Backend expected to use `uv` for dependency management, `ruff` for lint/format, `pytest` for tests, `uvicorn` to run.
-- Frontend expected to use `pnpm` for dependency management, `eslint`/`prettier` for lint/format, `vitest` for tests, `next dev` to run.
+- Install: `uv sync`
+- Run dev server: `uv run uvicorn src.main:app --reload`
+- Lint/format: `uv run ruff check --fix .` / `uv run ruff format .`
+- Tests: `uv run pytest` (requires a local Postgres with `pgvector` — see below)
+- Migrations: `uv run alembic upgrade head` / `uv run alembic revision --autogenerate -m "..."`
 
-Do not write speculative commands here before the corresponding tooling actually exists in the repo — update this section the same day `backend/` or `frontend/` is scaffolded.
+### Frontend (`frontend/`, run via `pnpm`)
+
+- Install: `pnpm install`
+- Run dev server: `pnpm dev`
+- Lint/format: `pnpm lint` / `pnpm format`
+- Tests: `pnpm test`
+- Build: `pnpm build`
+
+### Local scratch database
+
+Tests and local dev run against a throwaway Postgres 17 + pgvector instance, not the real Supabase project (`backend/.env`, gitignored, documents this). To stand it up from scratch:
+
+```
+brew services start postgresql@17   # configured to listen on port 5433, not the default 5432
+createdb -p 5433 contextos_dev
+psql -p 5433 -d contextos_dev -c "CREATE EXTENSION IF NOT EXISTS vector;"
+cd backend && uv run alembic upgrade head
+```
