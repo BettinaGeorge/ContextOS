@@ -1,6 +1,15 @@
 from unittest.mock import patch
 
-from src.llm.voyage_client import MAX_TOKENS_PER_BATCH, MIN_SECONDS_BETWEEN_REQUESTS, VoyageClient
+import pytest
+from voyageai.error import RateLimitError
+
+from src.llm.voyage_client import (
+    MAX_RATE_LIMIT_RETRIES,
+    MAX_TOKENS_PER_BATCH,
+    MIN_SECONDS_BETWEEN_REQUESTS,
+    RATE_LIMIT_RETRY_SECONDS,
+    VoyageClient,
+)
 
 
 class _FakeEncoding:
@@ -20,8 +29,9 @@ class _FakeVoyageSDKClient:
     """Stands in for the real voyageai.Client so batching/pacing logic can
     be tested without live credentials or a real API call."""
 
-    def __init__(self, token_counts: list[int]):
+    def __init__(self, token_counts: list[int], fail_first_n_calls: int = 0):
         self._token_counts = token_counts
+        self._fail_first_n_calls = fail_first_n_calls
         self.embed_calls: list[list[str]] = []
 
     def tokenize(self, texts, model=None):
@@ -30,12 +40,16 @@ class _FakeVoyageSDKClient:
 
     def embed(self, texts, model, input_type, output_dimension):
         self.embed_calls.append(list(texts))
+        if len(self.embed_calls) <= self._fail_first_n_calls:
+            raise RateLimitError("reduced rate limits of 3 RPM and 10K TPM")
         return _FakeEmbedResult([[0.1] * output_dimension for _ in texts])
 
 
-def _client_with_fake_sdk(token_counts: list[int]) -> tuple[VoyageClient, _FakeVoyageSDKClient]:
+def _client_with_fake_sdk(
+    token_counts: list[int], fail_first_n_calls: int = 0
+) -> tuple[VoyageClient, _FakeVoyageSDKClient]:
     client = VoyageClient()
-    fake_sdk = _FakeVoyageSDKClient(token_counts)
+    fake_sdk = _FakeVoyageSDKClient(token_counts, fail_first_n_calls)
     client._client = fake_sdk
     return client, fake_sdk
 
@@ -75,3 +89,28 @@ def test_texts_under_budget_are_sent_in_a_single_batch():
     assert fake_sdk.embed_calls[0] == texts
     assert len(embeddings) == 3
     fake_sleep.assert_not_called()
+
+
+def test_retries_after_a_rate_limit_error_and_eventually_succeeds():
+    texts = ["small-a"]
+    client, fake_sdk = _client_with_fake_sdk([10], fail_first_n_calls=2)
+
+    with patch("src.llm.voyage_client.time.sleep") as fake_sleep:
+        embeddings = client.embed_documents(texts)
+
+    assert len(fake_sdk.embed_calls) == 3
+    assert len(embeddings) == 1
+    assert fake_sleep.call_args_list == [
+        ((RATE_LIMIT_RETRY_SECONDS,),),
+        ((RATE_LIMIT_RETRY_SECONDS,),),
+    ]
+
+
+def test_gives_up_after_max_rate_limit_retries():
+    texts = ["small-a"]
+    client, fake_sdk = _client_with_fake_sdk([10], fail_first_n_calls=MAX_RATE_LIMIT_RETRIES + 1)
+
+    with patch("src.llm.voyage_client.time.sleep"), pytest.raises(RateLimitError):
+        client.embed_documents(texts)
+
+    assert len(fake_sdk.embed_calls) == MAX_RATE_LIMIT_RETRIES + 1

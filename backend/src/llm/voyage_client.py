@@ -1,6 +1,7 @@
 import time
 
 import voyageai
+from voyageai.error import RateLimitError
 
 from src.core.config import get_settings
 from src.models.artifact import EMBEDDING_DIM
@@ -10,14 +11,16 @@ from src.models.artifact import EMBEDDING_DIM
 MODEL = "voyage-code-3"
 
 # Voyage's free tier (no payment method on file — the $0 constraint from
-# ADR-002) throttles hard: 3 requests/minute, 10K tokens/minute. Found by
-# running ingestion against a real repo (T061/T062) — a single batch call
-# with a whole repo's files blew straight through the token cap. Batches are
-# built to stay under MAX_TOKENS_PER_BATCH with a safety margin (Voyage's
-# real cap, not a contractual guarantee), and consecutive batches are paced
-# by MIN_SECONDS_BETWEEN_REQUESTS to stay under the request cap.
-MAX_TOKENS_PER_BATCH = 9_000
+# ADR-002) throttles hard: 3 requests/minute, 10K tokens/minute — and TPM is
+# a rolling per-minute budget across all requests, not a per-request cap
+# (found the hard way: a first attempt sized batches at ~9K tokens each,
+# assuming per-request, and still hit RateLimitError). At 3 RPM, each
+# request needs to fit roughly TPM/RPM tokens to keep the rolling minute
+# under budget, hence the much smaller per-batch cap below.
+MAX_TOKENS_PER_BATCH = 3_000
 MIN_SECONDS_BETWEEN_REQUESTS = 21  # ceil(60s / 3 RPM)
+RATE_LIMIT_RETRY_SECONDS = 65  # a full rolling window, plus margin
+MAX_RATE_LIMIT_RETRIES = 3
 
 
 class VoyageClient:
@@ -32,11 +35,21 @@ class VoyageClient:
         for i, batch in enumerate(self._batch_by_token_budget(texts)):
             if i > 0:
                 time.sleep(MIN_SECONDS_BETWEEN_REQUESTS)
-            result = self._client.embed(
-                batch, model=MODEL, input_type="document", output_dimension=EMBEDDING_DIM
-            )
-            embeddings.extend(result.embeddings)
+            embeddings.extend(self._embed_batch_with_retry(batch))
         return embeddings
+
+    def _embed_batch_with_retry(self, batch: list[str]) -> list[list[float]]:
+        for attempt in range(MAX_RATE_LIMIT_RETRIES + 1):
+            try:
+                result = self._client.embed(
+                    batch, model=MODEL, input_type="document", output_dimension=EMBEDDING_DIM
+                )
+                return result.embeddings
+            except RateLimitError:
+                if attempt == MAX_RATE_LIMIT_RETRIES:
+                    raise
+                time.sleep(RATE_LIMIT_RETRY_SECONDS)
+        raise AssertionError("unreachable")
 
     def embed_query(self, text: str) -> list[float]:
         result = self._client.embed(
