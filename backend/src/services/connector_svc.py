@@ -62,9 +62,12 @@ class ConnectorService:
             if n.artifact_type == "source_file":
                 chunks = chunk_source_file(n.title, n.content)
                 if len(chunks) <= 1:
-                    rows.append(self._artifact_from_normalized(workspace_id, source_system, n))
+                    if n.content.strip():
+                        rows.append(self._artifact_from_normalized(workspace_id, source_system, n))
                     continue
                 for i, chunk in enumerate(chunks):
+                    if not chunk.text.strip():
+                        continue
                     chunk_label = chunk.symbol_name or f"lines {chunk.start_line}-{chunk.end_line}"
                     rows.append(
                         Artifact(
@@ -78,7 +81,7 @@ class ConnectorService:
                             checksum=n.checksum,
                         )
                     )
-            else:
+            elif n.content.strip():
                 rows.append(self._artifact_from_normalized(workspace_id, source_system, n))
         return rows
 
