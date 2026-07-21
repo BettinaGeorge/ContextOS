@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,7 +31,13 @@ class ConnectorService:
         normalized = await self._fetch_normalized(connector, raw_token)
         rows = self._to_artifact_rows(workspace_id, connector.source_system, normalized)
         if rows:
-            embeddings = self._voyage.embed_documents([r.content for r in rows])
+            # embed_documents blocks for real (network calls plus rate-limit
+            # pacing sleeps, T062) — running it inline on the event loop
+            # would freeze the whole server, not just this one job. Offload
+            # to a worker thread so other requests keep being served.
+            embeddings = await asyncio.to_thread(
+                self._voyage.embed_documents, [r.content for r in rows]
+            )
             for row, embedding in zip(rows, embeddings, strict=True):
                 row.embedding = embedding
             await self._artifacts.create_many(rows)
