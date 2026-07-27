@@ -22,7 +22,7 @@ Every artifact and relationship is scoped by `workspace_id`, even while only one
 
 ## Technology Constraints
 
-Stack is fixed per `docs/decisions/ADR-001-weekend-mvp-stack.md` and `ADR-002-groq-llm-provider.md`: Python/FastAPI/SQLAlchemy/Postgres+pgvector backend (hosted free on Supabase), Next.js/TypeScript frontend (hosted free on Vercel), Supabase Auth, Groq (single-provider interface, not a multi-provider abstraction) for generation, Voyage AI for embeddings. Budget constraint: $0 for anything requiring a payment method (tightened from an earlier "$10 cap" once a capped-but-real bill turned out not to be acceptable — see ADR-002). No new external dependency or service is introduced without a new ADR under `docs/decisions/` documenting both the trade-off and its cost.
+Stack is fixed per `docs/decisions/ADR-001-weekend-mvp-stack.md` and `ADR-002-groq-llm-provider.md`: Python/FastAPI/SQLAlchemy/Postgres+pgvector backend (hosted free on Supabase), Next.js/TypeScript frontend (hosted free on Vercel), Supabase Auth, Groq (single-provider interface, not a multi-provider abstraction) for generation, Voyage AI for embeddings. Connector token acquisition is fixed per `ADR-003-github-app-connector.md` (a GitHub App, not a classic OAuth App, for GitHub repo access) and `ADR-004-notion-public-integration.md` (a Notion public integration for Notion page access), both OAuth-based, replacing Phase 1's manual PAT/integration-token entry. Budget constraint: $0 for anything requiring a payment method (tightened from an earlier "$10 cap" once a capped-but-real bill turned out not to be acceptable — see ADR-002). No new external dependency or service is introduced without a new ADR under `docs/decisions/` documenting both the trade-off and its cost.
 
 ## Development Workflow
 
@@ -35,4 +35,4 @@ Stack is fixed per `docs/decisions/ADR-001-weekend-mvp-stack.md` and `ADR-002-gr
 
 This constitution supersedes ad hoc practice. Amendments require: a documented reason, an update to this file, and a check that `CLAUDE.md` and `docs/prd.md` remain consistent with the change. Complexity beyond what a principle above allows must be justified in writing (an ADR) before it's implemented, not after.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-18 | **Last Amended**: 2026-07-18
+**Version**: 1.1.0 | **Ratified**: 2026-07-18 | **Last Amended**: 2026-07-23 (Technology Constraints: added ADR-003/ADR-004 as fixed connector-token-acquisition decisions — non-breaking addition, no principle changed)
