@@ -13,6 +13,7 @@
 Phase 1 shipped with five known reliability gaps. Each one is either written down already (ADR-001 "Consequences", a comment in the relationship-extraction code, the README "Known limitations") or visible in the code:
 
 - Every re-ingestion inserts all artifacts again and re-embeds all of them. The `checksum` field was added "for detecting unchanged content on re-ingestion" (feature 001 data model) but nothing uses it, and the relationship step states that Phase 1 "accepts possible duplicate rows."
+- Source files are identified by their content hash. An edited file therefore becomes a second artifact and the old version stays searchable forever, and two files with identical content would share one identity. Only some artifact types carry a checksum at all.
 - The keyword half of retrieval looks for the whole question as one substring, so a natural-language question almost never matches, and the keyword and vector results are simply concatenated.
 - Ingestion jobs are claimed with a read-then-update that is only safe with exactly one worker, and a failed job is never retried.
 - Retrieved text is placed inside a delimited evidence section without escaping, so a document that contains the closing delimiter can end the section early. This is the exact class of attack Constitution Principle III exists to prevent.
@@ -116,6 +117,8 @@ If more than one worker process is polling the job table, each queued job is pic
 - A document's content contains text that imitates a citation marker. Citation validation must still accept only identifiers that were retrieved (covered by User Story 1, scenario 4).
 - A source file is split into several stored pieces. Today every piece carries the whole file's checksum. Idempotency and "unchanged" detection must therefore treat the file as the unit: a changed file replaces all of its pieces, and an unchanged file touches none of them.
 - A file shrinks and now produces fewer pieces than before. The leftover pieces from the earlier version must not remain as stale duplicates of removed content.
+- A source file is edited. The old version must not remain searchable alongside the new one.
+- Two different source files have identical content. They must remain two separate artifacts.
 - The embedding service rate-limits part-way through a run, so the job fails after some artifacts were already processed. The retry must complete the run without duplicates (User Story 2, scenario 3).
 - A retry is scheduled and the operator triggers ingestion manually at the same time. The operator's action must not create a second concurrent run for the same connector.
 - A worker stops while a job is marked running. The job would stay running forever. Recovering these jobs is out of scope here (see Assumptions) but must not be made worse by this feature.
@@ -136,7 +139,7 @@ If more than one worker process is polling the job table, each queued job is pic
 
 **Idempotent ingestion**
 
-- **FR-005**: An artifact's identity MUST be stable across ingestions of the same source within a workspace, so that ingesting the same source item again refers to the same stored artifact.
+- **FR-005**: An artifact's identity MUST be stable across ingestions of the same source within a workspace, so that ingesting the same source item again refers to the same stored artifact. Identity MUST NOT depend on the item's current content: editing a source file updates the existing artifact, and two different files with identical content remain two artifacts. Artifact type is part of identity.
 - **FR-006**: The system MUST prevent two stored artifacts from having the same identity within a workspace, so that duplicates cannot be created by any code path, including concurrent runs.
 - **FR-007**: When an ingestion encounters an item whose identity already exists and whose content checksum is unchanged, the system MUST leave the stored artifact as it is and MUST NOT request a new embedding for it.
 - **FR-008**: When an ingestion encounters an item whose identity exists but whose content has changed, the system MUST update the stored artifact in place and re-embed only that item.
@@ -175,7 +178,7 @@ If more than one worker process is polling the job table, each queued job is pic
 ### Key Entities *(include if feature involves data)*
 
 - **Ingestion Job**: A request to ingest one connector. Has a status (queued, running, waiting to retry, complete, failed), an attempt count, the last error message, and the time of the next attempt when one is scheduled. Each connector has at most one active job at a time (FR-022).
-- **Artifact**: One stored, embeddable piece of source content. Its identity is the combination of workspace, source system and the source item's own identifier, and it carries a content checksum used to detect change. A source file may be stored as several pieces that are replaced together.
+- **Artifact**: One stored, embeddable piece of source content. Its identity is the combination of workspace, source system, artifact type and a source identifier that does not change when the content changes (for a source file, its location in the repository). It carries a content checksum used to detect change. A source file may be stored as several pieces that are replaced together.
 - **Relationship**: A deterministic link between two artifacts. Unique per workspace by source artifact, target artifact and type.
 - **Evidence Item**: One retrieved artifact as presented to the model, with its identifying fields and its content. Everything inside it is data, never instructions.
 - **Retrieval Result List**: An ordered list of artifacts from one retrieval path (keyword or similarity). Two lists are merged into one ranked list.
@@ -200,7 +203,7 @@ If more than one worker process is polling the job table, each queued job is pic
 - Recovering a job left in the running state after a worker crash is out of scope. It is a real gap closely related to this feature and is recorded as a follow-up, not silently dropped.
 - Items deleted at the source stay in ContextOS after re-ingestion, because there is no incremental sync. Removing them is a separate decision.
 - No change is made to the generation or embedding providers, the answer format, the citation rules, or abstention behavior.
-- Migrations for this feature touch the artifact, relationship and job tables, and the connector status values if a "retrying" state is added. Feature 002 changes the connector table (installation identifier, nullable token). The two features therefore both migrate the connector side, so they should not be merged in an order that makes their migrations conflict. Migration ordering is a planning concern for whichever is built second.
+- Migrations for this feature touch the artifact, relationship and job tables only; no connector status value is added (the plan represents "waiting to retry" without one). Feature 002 changes the connector table, so the two are independent, but whichever migration is created second must chain after the first. Feature 002 is parked, so this feature's migration goes first.
 - The existing retry inside the embedding client for rate limits is kept. The new job-level retry sits on top of it and is not a replacement.
 - Deployment is not required for this feature to be complete. All acceptance scenarios are testable locally.
 - The question set and baseline for SC-006 are recorded before any retrieval change is made, so the comparison is real.

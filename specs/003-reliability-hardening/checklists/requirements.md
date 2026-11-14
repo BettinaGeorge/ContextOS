@@ -36,4 +36,5 @@
 - No clarification markers were needed. Each open choice has a stated default in Assumptions (retry count and delays, test-size minimums, out-of-scope items).
 - Numeric minimums in FR-003 and SC-004 (eight break-out patterns, twenty jobs) and the proposed three-attempt retry are proposals chosen for this spec, not measured requirements. They are flagged as such in Assumptions.
 - SC-006 depends on a baseline that must be recorded before any retrieval change. That is stated in Assumptions and should become the first task in `tasks.md`.
-- Items worth a human decision before `/speckit-plan`: (1) whether existing duplicate rows may be deleted automatically during rollout (spec assumes yes, after review against a copy of real data); (2) whether to sequence this feature before or after feature 002, since both need migrations.
+- Decisions resolved before planning: existing duplicate rows may be deleted during rollout (after review against a copy of real data), and feature 002 is parked, so this feature's migration goes first.
+- Updated after `/speckit-plan`: the plan found that GitHub source files use their content hash as identity, so FR-005, the Artifact entity, the rationale and the edge cases were extended to cover edited files and identical-content files.
