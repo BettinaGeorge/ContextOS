@@ -1,4 +1,4 @@
-"""Migration a7d3c91e5b20 against a dedicated scratch database.
+"""Migration a7d3c91e5b20 (tested in isolation, never `head`) against a dedicated scratch database.
 
 Runs only when MIGRATION_TEST_DATABASE_URL points at a database whose name ends in
 `_migration_test` (for example `createdb -p 5433 contextos_migration_test`). The
@@ -20,6 +20,7 @@ import pytest
 SCRATCH_URL = os.environ.get("MIGRATION_TEST_DATABASE_URL", "")
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 BASE_REVISION = "4500f22c8686"
+THIS_REVISION = "a7d3c91e5b20"
 
 pytestmark = pytest.mark.skipif(
     not urlparse(SCRATCH_URL).path.endswith("_migration_test"),
@@ -143,7 +144,7 @@ async def seeded() -> dict:
         ids["job_queued"] = await add_job("queued", newer)
     finally:
         await connection.close()
-    _alembic("upgrade", "head")
+    _alembic("upgrade", THIS_REVISION)
     return ids
 
 
@@ -254,4 +255,4 @@ async def test_new_constraints_reject_duplicates(seeded):
 
 async def test_downgrade_then_upgrade_round_trips(seeded):
     _alembic("downgrade", BASE_REVISION)
-    _alembic("upgrade", "head")
+    _alembic("upgrade", THIS_REVISION)
