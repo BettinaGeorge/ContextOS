@@ -158,7 +158,7 @@ class GitHubConnector(BaseConnector):
         kind = raw["type"]
         if kind == "file":
             return NormalizedArtifact(
-                source_artifact_id=raw["sha"],
+                source_artifact_id=raw["path"],
                 artifact_type="source_file",
                 title=raw["path"],
                 content=raw["content"],

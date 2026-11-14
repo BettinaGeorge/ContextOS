@@ -27,9 +27,8 @@ class RelationshipService:
     async def extract_for_workspace(self, workspace_id) -> int:
         """Scans all currently-ingested artifacts in the workspace for the
         deterministic linking convention (PRD §4) and writes the
-        relationships found. Returns the count created. Safe to re-run —
-        idempotency at scale is a Phase 2 concern (PRD §10 open questions);
-        Phase 1 accepts possible duplicate rows on re-ingestion."""
+        relationships found. Returns the count newly created; safe to re-run,
+        since an edge that already exists is left alone and not counted."""
         documents = await self._artifacts.list_by_workspace(
             workspace_id, artifact_type=ArtifactType.document
         )
@@ -47,7 +46,7 @@ class RelationshipService:
                 target = _find_by_source_url(github_artifacts, url)
                 if target is None:
                     continue
-                await self._relationships.create(
+                _, was_created = await self._relationships.create_if_absent(
                     workspace_id=workspace_id,
                     source_artifact_id=doc.id,
                     target_artifact_id=target.id,
@@ -55,14 +54,14 @@ class RelationshipService:
                     relationship_origin=RelationshipOrigin.explicit,
                     evidence=url,
                 )
-                created += 1
+                created += int(was_created)
 
         for artifact in github_artifacts:
             for url in NOTION_URL_RE.findall(artifact.content):
                 target = _find_by_source_url(documents, url)
                 if target is None:
                     continue
-                await self._relationships.create(
+                _, was_created = await self._relationships.create_if_absent(
                     workspace_id=workspace_id,
                     source_artifact_id=artifact.id,
                     target_artifact_id=target.id,
@@ -70,7 +69,7 @@ class RelationshipService:
                     relationship_origin=RelationshipOrigin.explicit,
                     evidence=url,
                 )
-                created += 1
+                created += int(was_created)
 
         return created
 
