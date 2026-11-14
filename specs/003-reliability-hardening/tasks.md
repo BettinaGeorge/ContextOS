@@ -70,12 +70,12 @@ description: "Task list for Phase 1 Reliability Hardening"
 ### Tests for User Story 1 (write first, confirm they fail)
 
 - [x] T014 [P] [US1] Add `backend/tests/unit/test_evidence_escaping.py` with the adversarial set from FR-003, at least eight patterns: closing evidence tag in content; fake complete `<item>` in content; quote and extra attribute in `source_url`; the same in `artifact_type`, `origin` and `artifact_id`; nested or malformed tags; upper-case and spaced variants (`</EVIDENCE >`); an entity-like string (`&lt;/evidence&gt;`) to confirm it is escaped once, not decoded; and text imitating `[cite:ID]`. Each asserts exactly one `<evidence>` and one `</evidence>`, item count equals input count, and attribute values round-trip through `html.unescape`.
-- [ ] T015 [P] [US1] Add `backend/tests/unit/test_cite_marker_in_evidence.py`: evidence content containing `[cite:<id of an artifact that was not retrieved>]` and a model reply that echoes it produces no citation for that id (confirms FR-004 is untouched). Use the existing fake-client pattern from `test_answer_svc.py` without editing that file.
+- [x] T015 [P] [US1] Add `backend/tests/unit/test_cite_marker_in_evidence.py`: evidence content containing `[cite:<id of an artifact that was not retrieved>]` and a model reply that echoes it produces no citation for that id (confirms FR-004 is untouched). Use the existing fake-client pattern from `test_answer_svc.py` without editing that file.
 
 ### Implementation for User Story 1
 
 - [x] T016 [US1] In `backend/src/llm/groq_client.py`, escape every attribute value with `html.escape(value, quote=True)` and every item body with `html.escape(value, quote=False)` inside `_build_evidence_block`. Add one sentence to `SYSTEM_PROMPT` stating that evidence is escaped, that `&lt;` means a literal `<`, and that quoted evidence should use the original characters.
-- [ ] T017 [US1] Run T014 and T015 (now passing) and the existing `backend/tests/unit/test_prompt_isolation.py` and `test_answer_svc.py` unchanged. Run `quickstart.md` scenario 1.
+- [x] T017 [US1] Run T014 and T015 (now passing) and the existing `backend/tests/unit/test_prompt_isolation.py` and `test_answer_svc.py` unchanged. Run `quickstart.md` scenario 1.
 
 **Checkpoint**: US1 is shippable on its own (ADR-008).
 
