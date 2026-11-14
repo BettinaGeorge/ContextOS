@@ -1,11 +1,28 @@
+import re
 import uuid
 from dataclasses import dataclass
 
-from sqlalchemy import delete, func, or_, select, update
+from sqlalchemy import Text, delete, func, literal, literal_column, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.artifact import Artifact, ArtifactType, SourceSystem
+
+
+MAX_KEYWORD_TOKENS = 12
+DEFAULT_SEARCH_LIMIT = 10
+_TOKEN_RE = re.compile(r"[a-z0-9]+")
+
+
+def keyword_tokens(question: str) -> list[str]:
+    """Search terms from a free-text question: lower-case letters and digits only, so no
+    character of search syntax can reach the database query. Single characters carry no
+    meaning, repeats add nothing, and a long question is capped."""
+    seen: dict[str, None] = {}
+    for token in _TOKEN_RE.findall(question.lower()):
+        if len(token) >= 2:
+            seen.setdefault(token)
+    return list(seen)[:MAX_KEYWORD_TOKENS]
 
 
 @dataclass(frozen=True)
@@ -180,15 +197,23 @@ class ArtifactRepository:
         result = await self._session.execute(query)
         return list(result.scalars().all())
 
-    async def search_fulltext(self, workspace_id: uuid.UUID, query_text: str) -> list[Artifact]:
-        """Simple ILIKE-based full-text search over title/content — sufficient
-        at this data volume (research.md §5: no special indexing needed yet)."""
-        pattern = f"%{query_text}%"
+    async def search_fulltext(
+        self, workspace_id: uuid.UUID, query_text: str, limit: int = DEFAULT_SEARCH_LIMIT
+    ) -> list[Artifact]:
+        """Ranked keyword search on the stored full-text column (ADR-006). Any question term
+        may match (OR), and results are ordered by ts_rank. Stop words are dropped by the
+        search configuration; a question with no usable terms returns nothing."""
+        tokens = keyword_tokens(query_text)
+        if not tokens:
+            return []
+        query = func.to_tsquery(
+            literal_column("'english'::regconfig"), literal(" | ".join(tokens), Text)
+        )
         result = await self._session.execute(
-            select(Artifact).where(
-                Artifact.workspace_id == workspace_id,
-                (Artifact.title.ilike(pattern)) | (Artifact.content.ilike(pattern)),
-            )
+            select(Artifact)
+            .where(Artifact.workspace_id == workspace_id, Artifact.search_vector.op("@@")(query))
+            .order_by(func.ts_rank(Artifact.search_vector, query).desc(), Artifact.id)
+            .limit(limit)
         )
         return list(result.scalars().all())
 
