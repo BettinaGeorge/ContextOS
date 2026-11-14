@@ -114,3 +114,12 @@ The migration is run first against a copy of the real database and its before/af
 - That the PostgreSQL version on the hosted Supabase project is 12 or later.
 - That existing tests which reuse `source_artifact_id="1"` for more than one artifact in the same workspace and type still pass; if not, only fixture IDs change, not assertions.
 - Two existing tests (`test_handle_ingestion_job_marks_connector_failed_on_error` in `test_ingestion_svc.py` and `test_generic_failure_sets_failed_not_needs_reconnect` in `test_ingestion_failure.py`) fail a freshly enqueued job (zero attempts) with a generic error and assert the connector is `failed`. That is the old fail-on-first-error behavior, which FR-019 deliberately replaces. Their assertions stay as written; their job fixtures are set to the final attempt. This is the only existing test whose setup has to change for behavioral rather than identity reasons.
+
+**Resolved on 2026-11-14 (owner's machine, scratch database `contextos_test`, suite 153 passed):**
+
+- Identifiers: a file containing `def spin_widget(): pass` is found by the question "spin widget"
+  (`test_identifier_with_underscores_is_findable_by_its_words`), so `english` splits on underscores.
+- Stop-words-only questions (`the and of`) return nothing without an error
+  (`test_stop_words_only_question_returns_nothing_without_error`).
+- Existing tests that reuse `source_artifact_id` all pass; no fixture identity needed changing (T012).
+- Still open: GIN index and `ts_rank` on a copy of real data (scenario 7), and the hosted Supabase PostgreSQL version (T004).
