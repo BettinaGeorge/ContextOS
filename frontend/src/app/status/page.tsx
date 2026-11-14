@@ -82,7 +82,12 @@ export default function StatusPage() {
             </p>
           )}
 
-          {connectors?.map((c) => (
+          {connectors?.map((c) => {
+            // An error on an ingesting connector means an earlier attempt failed and a
+            // retry is coming; on the very first attempt there is no error yet.
+            const retrying =
+              c.status === "ingesting" && (c.ingestion_attempts ?? 0) > 0 && !!c.error_message;
+            return (
             <div
               key={c.connector_id}
               className="flex flex-col gap-1 rounded-md border border-zinc-200 p-3 dark:border-zinc-800"
@@ -100,11 +105,24 @@ export default function StatusPage() {
                   Last ingested: {new Date(c.last_ingested_at).toLocaleString()}
                 </span>
               )}
+              {retrying && (
+                <span className="text-xs text-zinc-500">
+                  Retrying (attempt {c.ingestion_attempts} of {c.max_attempts})
+                </span>
+              )}
+              {c.status === "failed" && c.ingestion_attempts != null && c.max_attempts != null && (
+                <span className="text-xs text-red-600">
+                  Failed after {c.ingestion_attempts} of {c.max_attempts} attempts
+                </span>
+              )}
               {c.error_message && (
-                <span className="text-xs text-red-600">{c.error_message}</span>
+                <span className={`text-xs ${retrying ? "text-zinc-500" : "text-red-600"}`}>
+                  {c.error_message}
+                </span>
               )}
             </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
     </PageShell>
