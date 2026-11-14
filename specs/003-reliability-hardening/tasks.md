@@ -103,7 +103,7 @@ description: "Task list for Phase 1 Reliability Hardening"
 - [x] T024 [US2] In `backend/src/repositories/artifact_repository.py`, add: a method returning the existing `(identity, checksum, title, source_url, has_embedding)` for a workspace and source system; an upsert using `INSERT ... ON CONFLICT ON CONSTRAINT uq_artifact_identity DO UPDATE` with one path that rewrites content, checksum, embedding and `ingestion_version + 1` and one metadata-only path that leaves `embedding` untouched; and a method deleting stale pieces for given files using `startswith(prefix, autoescape=True)`.
 - [x] T025 [US2] In `backend/src/services/connector_svc.py`, compute SHA-256 of each piece's `content` into `checksum`, add the pure partition function tested in T018, embed only new and content-changed rows through the existing `asyncio.to_thread(embed_documents, ...)`, upsert, then delete stale pieces for each file seen, with the writes and the stale-piece deletion in one transaction. Update the class docstring.
 - [x] T026 [US2] In `backend/src/repositories/relationship_repository.py`, make `create` insert-or-ignore on `uq_relationship_edge` and then select the row so it still returns a `Relationship` (keep the signature). In `backend/src/services/relationship_svc.py`, count only newly created rows and remove the "accepts possible duplicate rows" sentence from the docstring.
-- [ ] T027 [US2] Run T018 to T022 (now passing) plus the full existing suite, then `quickstart.md` scenarios 2 and 3.
+- [x] T027 [US2] Run T018 to T022 (now passing) plus the full existing suite, then `quickstart.md` scenarios 2 and 3.
 
 **Checkpoint**: US2 complete (ADR-005). Retry (US4) is now safe to build.
 
