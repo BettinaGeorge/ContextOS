@@ -72,7 +72,6 @@ def notion_page(page_id: str, content: str) -> NormalizedArtifact:
 
 
 async def stored_artifacts(db_session: AsyncSession, workspace_id: uuid.UUID) -> list[Artifact]:
-    db_session.expire_all()
     result = await db_session.execute(
         select(Artifact)
         .where(Artifact.workspace_id == workspace_id)
