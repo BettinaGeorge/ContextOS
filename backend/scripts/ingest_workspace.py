@@ -5,11 +5,16 @@ show that a second run changes nothing and embeds nothing.
     export DATABASE_URL=postgresql+asyncpg://localhost:5433/contextos_dev_copy
     uv run python -m scripts.ingest_workspace --workspace-id <uuid> --confirm contextos_dev_copy
 
+A connector with no stored token (feature 002's sign-in flow) is skipped, unless it is a GitHub
+connector and --github-token-env names an environment variable holding a read-only personal
+access token. That token is used for this run only: it is never stored or printed.
+
 It calls the real GitHub and Notion APIs and the real embedding service, so it spends
 embedding quota. `--confirm` must name the database it will write to."""
 
 import argparse
 import asyncio
+import os
 import uuid
 from urllib.parse import urlparse
 
@@ -18,7 +23,7 @@ def database_name(url: str) -> str:
     return urlparse(url).path.lstrip("/")
 
 
-async def _run(workspace_id: uuid.UUID) -> None:
+async def _run(workspace_id: uuid.UUID, github_token_env: str | None) -> None:
     from sqlalchemy import func, select
 
     from src.core.db import async_session_factory
@@ -51,10 +56,19 @@ async def _run(workspace_id: uuid.UUID) -> None:
             raise SystemExit("this workspace has no connectors")
         print(f"before: {await count(session, Artifact)} artifacts, "
               f"{await count(session, Relationship)} relationships")
+        service = ConnectorService(session, voyage_client=voyage)
         for connector in connectors:
-            rows = await ConnectorService(session, voyage_client=voyage).ingest(
-                workspace_id, connector
-            )
+            if github_token_env and connector.source_system == "github":
+                token = os.environ[github_token_env]
+                normalized = await service._fetch_normalized(connector, token)
+                rows = await service.ingest_normalized(
+                    workspace_id, connector.source_system, normalized
+                )
+            elif connector.encrypted_access_token is None:
+                print(f"skipped {connector.source_system}: no stored token")
+                continue
+            else:
+                rows = await service.ingest(workspace_id, connector)
             print(f"ingested {connector.source_system}: {rows} pieces")
         created = await RelationshipService(session).extract_for_workspace(workspace_id)
         print(f"new relationships: {created}")
@@ -69,13 +83,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--workspace-id", type=uuid.UUID, required=True)
     parser.add_argument("--confirm", required=True, help="name of the database to write to")
+    parser.add_argument("--github-token-env", help="env var holding a GitHub token for this run")
     args = parser.parse_args()
+    if args.github_token_env and args.github_token_env not in os.environ:
+        parser.error(f"environment variable {args.github_token_env} is not set")
 
     target = database_name(get_settings().database_url)
     if args.confirm != target:
         parser.error(f"--confirm must equal the target database name: {target!r}")
     print(f"writing to database: {target}")
-    asyncio.run(_run(args.workspace_id))
+    asyncio.run(_run(args.workspace_id, args.github_token_env))
 
 
 if __name__ == "__main__":

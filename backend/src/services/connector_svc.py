@@ -87,7 +87,9 @@ class ConnectorService:
             )
             for row, embedding in zip(to_write, embeddings, strict=True):
                 row.embedding = embedding
-        source_file_ids = [n.source_artifact_id for n in normalized if n.artifact_type == "source_file"]
+        source_file_ids = [
+            n.source_artifact_id for n in normalized if n.artifact_type == "source_file"
+        ]
         try:
             await self._artifacts.upsert_content(to_write)
             await self._artifacts.update_metadata(workspace_id, plan.metadata_changed)
