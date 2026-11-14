@@ -180,7 +180,7 @@ description: "Task list for Phase 1 Reliability Hardening"
 
 - [x] T048 [US5] In `backend/src/repositories/job_repository.py`, make `claim_oldest_queued` a single `SELECT ... FOR UPDATE SKIP LOCKED` (via `with_for_update(skip_locked=True)`) honouring `next_attempt_at`, with the status update in the same transaction.
 - [x] T049 [US5] In `backend/src/repositories/job_repository.py`, make `enqueue` first mark `running` jobs for that connector older than `STALE_RUNNING_AFTER` (60 minutes) as `failed`, then insert, and on a unique-index conflict return the existing active job. Keep the positional signature the existing tests use. In `backend/src/services/ingestion_svc.py` make `trigger` handle a returned existing job without resetting the connector status incorrectly.
-- [ ] T050 [US5] Run T046 and T047 (now passing), the existing suites, and `quickstart.md` scenario 6.
+- [x] T050 [US5] Run T046 and T047 (now passing), the existing suites, and `quickstart.md` scenario 6.
 
 **Checkpoint**: US5 complete (ADR-007, claiming part).
 
