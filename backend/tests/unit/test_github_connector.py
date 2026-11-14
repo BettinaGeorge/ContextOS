@@ -138,3 +138,16 @@ async def test_ingest_full_normalizes_files_prs_commits_issues(connector):
     # Only the real issue, not the PR that /issues also returned.
     assert len(by_type["issue"]) == 1
     assert by_type["issue"][0].title == "Spinner is too fast"
+
+
+def test_source_file_identity_is_its_path_and_distinct_for_identical_blobs(connector):
+    first = connector.normalize_artifact(
+        {"type": "file", "path": "src/a.py", "content": "same", "sha": "blob-sha"}
+    )
+    second = connector.normalize_artifact(
+        {"type": "file", "path": "src/b.py", "content": "same", "sha": "blob-sha"}
+    )
+
+    assert first.source_artifact_id == "src/a.py"
+    assert second.source_artifact_id == "src/b.py"
+    assert first.source_artifact_id != second.source_artifact_id
