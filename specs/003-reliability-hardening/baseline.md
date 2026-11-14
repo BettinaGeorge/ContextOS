@@ -45,10 +45,6 @@ URL mismatch: a one-word search for "reel" returned 681 results whose URLs have 
 same `blob/HEAD/<path>#L..` form the expected URLs use. That check also showed the
 same chunk stored twice (`analytics_controller.py#L52-L54`, the duplicate-rows bug).
 
-## After (T034, owner)
-
-_Re-run on the new retrieval and record the result here._
-
 
 ## After (T034)
 
