@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.connectors.base import ConnectorAuthError
-from src.core.job_worker import register_handler
+from src.core.job_worker import MAX_ATTEMPTS, is_permanent_failure, register_handler
 from src.models.connector import ConnectorStatus
 from src.models.job import Job, JobType
 from src.repositories.connector_repository import ConnectorRepository
@@ -28,9 +28,11 @@ class IngestionService:
         connector = await self._connectors.get_by_id(workspace_id, connector_id)
         if connector is None:
             raise ValueError(f"No connector {connector_id} in workspace {workspace_id}")
-        await self._connectors.update_status(connector, ConnectorStatus.ingesting)
         job_type = _JOB_TYPE_FOR_SOURCE[connector.source_system]
-        return await self._jobs.enqueue(workspace_id, connector_id, job_type)
+        job, created = await self._jobs.enqueue_or_get(workspace_id, connector_id, job_type)
+        if created:
+            await self._connectors.update_status(connector, ConnectorStatus.ingesting)
+        return job
 
 
 async def _handle_ingestion_job(job: Job, session: AsyncSession) -> None:
@@ -56,10 +58,14 @@ async def _handle_ingestion_job(job: Job, session: AsyncSession) -> None:
         )
         raise
     except Exception as exc:
-        # Surface the failure on the connector too, not just the job row, so
-        # GET /connectors/{id}/status reflects it.
+        # Surface the latest error on the connector too, so GET /connectors/{id}/status
+        # shows it. The connector only becomes `failed` once no retry is coming; until
+        # then it stays `ingesting`.
+        gives_up = is_permanent_failure(exc) or job.attempts >= MAX_ATTEMPTS
         await connector_repo.update_status(
-            connector, ConnectorStatus.failed, error_message=str(exc)
+            connector,
+            ConnectorStatus.failed if gives_up else ConnectorStatus.ingesting,
+            error_message=str(exc),
         )
         raise
 
