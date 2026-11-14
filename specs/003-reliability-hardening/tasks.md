@@ -34,7 +34,7 @@ description: "Task list for Phase 1 Reliability Hardening"
 
 **Purpose**: Record the baseline and confirm the environment before any change.
 
-- [ ] T001 (OWNER) Write about ten real questions about your own repo and Notion pages in `specs/003-reliability-hardening/baseline.md`, each paired with the URL of the artifact that should be found. This is the question set that `docs/prd.md` §7 calls for and that does not yet exist.
+- [x] T001 (OWNER, drafted with owner picks; confirm repo assumption) Write about ten real questions about your own repo and Notion pages in `specs/003-reliability-hardening/baseline.md`, each paired with the URL of the artifact that should be found. This is the question set that `docs/prd.md` §7 calls for and that does not yet exist.
 - [ ] T002 [P] Create `backend/scripts/keyword_baseline.py`: reads the questions from `baseline.md`, runs each through `ArtifactRepository.search_fulltext` for the owner's workspace, and prints whether the expected URL is in the first ten results. It must work unchanged before and after US3 so the two runs are comparable.
 - [ ] T003 (OWNER) Run `backend/scripts/keyword_baseline.py` against your populated local database **on the unmodified retrieval code** (commit `eeaa447` or later without US3 changes) and record the commit hash and per-question results in `specs/003-reliability-hardening/baseline.md`. No retrieval change (T031, T032) may start before this is committed.
 - [ ] T004 [P] Confirm PostgreSQL is 12 or later locally (`SHOW server_version`) and on the hosted Supabase project. Record both in `specs/003-reliability-hardening/plan.md` under Technical Context if either differs from what is written there.
