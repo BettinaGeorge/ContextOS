@@ -173,12 +173,12 @@ description: "Task list for Phase 1 Reliability Hardening"
 
 ### Tests for User Story 5 (write first, confirm they fail)
 
-- [ ] T046 [P] [US5] Add `backend/tests/integration/test_job_claiming.py`: at least twenty queued jobs and two workers claiming concurrently with `asyncio.gather` on separate sessions; assert every job's execution count is exactly one, repeated several times (SC-004); one queued job and two simultaneous claims yields exactly one success and one `None`; a `running` job is never claimed by the other worker.
+- [x] T046 [P] [US5] Add `backend/tests/integration/test_job_claiming.py`: at least twenty queued jobs and two workers claiming concurrently with `asyncio.gather` on separate sessions; assert every job's execution count is exactly one, repeated several times (SC-004); one queued job and two simultaneous claims yields exactly one success and one `None`; a `running` job is never claimed by the other worker.
 - [x] T047 [P] [US5] Add `backend/tests/integration/test_single_active_job.py`: a second trigger for a connector with a queued, running or waiting-to-retry job returns the existing job and creates none; a `running` job older than 60 minutes is marked `failed` ("abandoned: worker stopped") at enqueue and a new job is created; a `running` job younger than 60 minutes is not swept.
 
 ### Implementation for User Story 5
 
-- [ ] T048 [US5] In `backend/src/repositories/job_repository.py`, make `claim_oldest_queued` a single `SELECT ... FOR UPDATE SKIP LOCKED` (via `with_for_update(skip_locked=True)`) honouring `next_attempt_at`, with the status update in the same transaction.
+- [x] T048 [US5] In `backend/src/repositories/job_repository.py`, make `claim_oldest_queued` a single `SELECT ... FOR UPDATE SKIP LOCKED` (via `with_for_update(skip_locked=True)`) honouring `next_attempt_at`, with the status update in the same transaction.
 - [x] T049 [US5] In `backend/src/repositories/job_repository.py`, make `enqueue` first mark `running` jobs for that connector older than `STALE_RUNNING_AFTER` (60 minutes) as `failed`, then insert, and on a unique-index conflict return the existing active job. Keep the positional signature the existing tests use. In `backend/src/services/ingestion_svc.py` make `trigger` handle a returned existing job without resetting the connector status incorrectly.
 - [ ] T050 [US5] Run T046 and T047 (now passing), the existing suites, and `quickstart.md` scenario 6.
 
