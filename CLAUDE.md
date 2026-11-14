@@ -29,7 +29,7 @@ Do not build, even if it seems easy or "while I'm in there":
 - Incremental sync / webhooks
 - Team invites or multi-user collaboration UI
 - A formal eval harness (manual spot-checks only, for now)
-- A background job queue
+- A dedicated queue service (Redis/Celery/RQ) — ingestion jobs use the Postgres `jobs` table polled by an in-process worker, per ADR-001
 - Real (non-local) deployment
 
 Full non-goals list: `docs/prd.md` §9.
@@ -52,12 +52,11 @@ Full non-goals list: `docs/prd.md` §9.
 │       ├── spec.md
 │       ├── plan.md
 │       └── tasks.md
-├── backend/        (FastAPI — created when Phase 1 implementation starts)
-├── frontend/        (Next.js — created when Phase 1 implementation starts)
-└── tests/
+├── backend/        (FastAPI; tests live in backend/tests/{unit,contract,integration})
+└── frontend/       (Next.js; tests live next to the pages, e.g. src/app/ask/__tests__/)
 ```
 
-`backend/` and `frontend/` don't exist yet — this repo currently holds only product/spec docs. Create them per the implementation plan in the first spec under `specs/`, not ad hoc.
+Both `backend/` and `frontend/` exist and Phase 1 is implemented. New code follows the plan in the relevant spec under `specs/`, not ad hoc.
 
 ## Coding and testing conventions
 
