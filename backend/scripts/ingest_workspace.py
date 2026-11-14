@@ -23,7 +23,9 @@ def database_name(url: str) -> str:
     return urlparse(url).path.lstrip("/")
 
 
-async def _run(workspace_id: uuid.UUID, github_token_env: str | None) -> None:
+async def _run(
+    workspace_id: uuid.UUID, github_token_env: str | None, skip_embeddings: bool
+) -> None:
     from sqlalchemy import func, select
 
     from src.core.db import async_session_factory
@@ -49,7 +51,16 @@ async def _run(workspace_id: uuid.UUID, github_token_env: str | None) -> None:
         )
         return result.scalar_one()
 
-    voyage = CountingVoyage()
+    class NoEmbeddings:
+        """Stores pieces without vectors; a later normal run embeds them (a piece with no
+        vector always counts as needing one)."""
+
+        texts_embedded = 0
+
+        def embed_documents(self, texts):
+            return [None] * len(texts)
+
+    voyage = NoEmbeddings() if skip_embeddings else CountingVoyage()
     async with async_session_factory() as session:
         connectors = await ConnectorRepository(session).list_by_workspace(workspace_id)
         if not connectors:
@@ -74,7 +85,10 @@ async def _run(workspace_id: uuid.UUID, github_token_env: str | None) -> None:
         print(f"new relationships: {created}")
         print(f"after:  {await count(session, Artifact)} artifacts, "
               f"{await count(session, Relationship)} relationships")
-        print(f"texts sent to the embedding service this run: {voyage.texts_embedded}")
+        if skip_embeddings:
+            print("embeddings skipped: pieces stored without vectors (keyword search only)")
+        else:
+            print(f"texts sent to the embedding service this run: {voyage.texts_embedded}")
 
 
 def main() -> None:
@@ -84,6 +98,12 @@ def main() -> None:
     parser.add_argument("--workspace-id", type=uuid.UUID, required=True)
     parser.add_argument("--confirm", required=True, help="name of the database to write to")
     parser.add_argument("--github-token-env", help="env var holding a GitHub token for this run")
+    parser.add_argument(
+        "--skip-embeddings",
+        action="store_true",
+        help="store text only (no embedding calls); enough for the keyword baseline. "
+        "The free embedding tier needs hours for a whole repo",
+    )
     args = parser.parse_args()
     if args.github_token_env and args.github_token_env not in os.environ:
         parser.error(f"environment variable {args.github_token_env} is not set")
@@ -92,7 +112,7 @@ def main() -> None:
     if args.confirm != target:
         parser.error(f"--confirm must equal the target database name: {target!r}")
     print(f"writing to database: {target}")
-    asyncio.run(_run(args.workspace_id, args.github_token_env))
+    asyncio.run(_run(args.workspace_id, args.github_token_env, args.skip_embeddings))
 
 
 if __name__ == "__main__":
