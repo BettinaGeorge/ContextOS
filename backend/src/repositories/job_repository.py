@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.job import Job, JobStatus, JobType
 
-
 # A job that has been "running" this long was almost certainly left behind by a crashed
 # worker. Without this, the one-active-job-per-connector rule would block the connector
 # forever. A healthy job swept by mistake is harmless: ingestion is idempotent.

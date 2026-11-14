@@ -39,7 +39,7 @@ Where those constraints conflict, budget wins — a slower or more manual path i
 
 - Multi-repo, multi-tenant collaboration UI, incremental sync, and graph traversal are all still cut for Phase 1, but the data model (workspace_id everywhere, artifact/relationship tables) doesn't block adding them later.
 - Building the workspace/membership model by hand (instead of using Clerk's Organizations) is more work than the fastest possible path, but it's a one-time cost paid now in exchange for zero ongoing vendor billing risk.
-- The Postgres-backed job table is less capable than a real queue (no built-in retry/backoff, worker concurrency, or dead-letter handling) — acceptable for one repo + one Notion source; revisit if ingestion volume grows in Phase 2+.
+- The Postgres-backed job table is less capable than a real queue (no built-in retry/backoff, worker concurrency, or dead-letter handling; **superseded in part by ADR-007**, which adds bounded retries with backoff, `FOR UPDATE SKIP LOCKED` claiming and one active job per connector, still without dead-letter handling) — acceptable for one repo + one Notion source; revisit if ingestion volume grows in Phase 2+.
 - Render's free-tier cold starts are a real (if minor) UX cost accepted in exchange for $0 hosting.
 - LLM spend was originally the one area with genuine (if small and bounded) ongoing cost, mitigated with a hard spend cap rather than eliminated — see ADR-002 for why that stopped being acceptable and what replaced it. Embedding spend (Voyage) is unaffected by that change and still applies.
 

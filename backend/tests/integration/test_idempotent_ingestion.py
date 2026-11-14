@@ -2,8 +2,8 @@
 
 import pytest
 from _ingestion_support import (
-    CountingVoyage,
     TWO_FUNCTIONS,
+    CountingVoyage,
     make_workspace,
     notion_page,
     pull_request,

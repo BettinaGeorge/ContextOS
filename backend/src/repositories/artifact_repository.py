@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.artifact import Artifact, ArtifactType, SourceSystem
 
-
 MAX_KEYWORD_TOKENS = 12
 DEFAULT_SEARCH_LIMIT = 10
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
@@ -66,9 +65,7 @@ class ArtifactRepository:
                 Artifact.title,
                 Artifact.source_url,
                 Artifact.embedding.isnot(None).label("has_embedding"),
-            ).where(
-                Artifact.workspace_id == workspace_id, Artifact.source_system == source_system
-            )
+            ).where(Artifact.workspace_id == workspace_id, Artifact.source_system == source_system)
         )
         return {
             (row.artifact_type, row.source_artifact_id): ExistingPiece(

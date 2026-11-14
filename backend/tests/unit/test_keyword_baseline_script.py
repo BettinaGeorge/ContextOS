@@ -22,9 +22,7 @@ def test_parses_questions_and_builds_expected_urls():
         BaselineQuestion(
             "Q1", "How are citations checked?", BASE + "backend/src/services/answer_svc.py"
         ),
-        BaselineQuestion(
-            "Q2", "Why Groq?", BASE + "docs/decisions/ADR-002-groq-llm-provider.md"
-        ),
+        BaselineQuestion("Q2", "Why Groq?", BASE + "docs/decisions/ADR-002-groq-llm-provider.md"),
     ]
 
 

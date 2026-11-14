@@ -10,7 +10,7 @@ import os
 import subprocess
 import sys
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -54,7 +54,12 @@ async def _reset_to_base_revision() -> None:
 
 
 async def _insert_artifact(
-    connection, workspace_id, source_system, artifact_type, source_artifact_id, ingested_at,
+    connection,
+    workspace_id,
+    source_system,
+    artifact_type,
+    source_artifact_id,
+    ingested_at,
     content="body",
 ) -> uuid.UUID:
     artifact_id = uuid.uuid4()
@@ -62,8 +67,14 @@ async def _insert_artifact(
         "INSERT INTO artifacts (id, workspace_id, source_system, artifact_type, "
         "source_artifact_id, title, content, source_url, ingestion_version, ingested_at) "
         "VALUES ($1, $2, $3::artifact_source_system, $4::artifact_type, $5, $6, $7, $8, 1, $9)",
-        artifact_id, workspace_id, source_system, artifact_type, source_artifact_id,
-        f"title {source_artifact_id}", content, f"https://example.test/{source_artifact_id}",
+        artifact_id,
+        workspace_id,
+        source_system,
+        artifact_type,
+        source_artifact_id,
+        f"title {source_artifact_id}",
+        content,
+        f"https://example.test/{source_artifact_id}",
         ingested_at,
     )
     return artifact_id
@@ -73,7 +84,11 @@ async def _insert_relationship(connection, workspace_id, source_id, target_id, k
     await connection.execute(
         "INSERT INTO relationships (id, workspace_id, source_artifact_id, target_artifact_id, "
         "relationship_type, relationship_origin) VALUES ($1, $2, $3, $4, $5, 'explicit')",
-        uuid.uuid4(), workspace_id, source_id, target_id, kind,
+        uuid.uuid4(),
+        workspace_id,
+        source_id,
+        target_id,
+        kind,
     )
 
 
@@ -82,7 +97,11 @@ async def _insert_job(connection, workspace_id, connector_id, status, created_at
     await connection.execute(
         "INSERT INTO jobs (id, workspace_id, connector_id, job_type, status, attempts, created_at) "
         "VALUES ($1, $2, $3, 'ingest_github', $4::job_status, 0, $5)",
-        job_id, workspace_id, connector_id, status, created_at,
+        job_id,
+        workspace_id,
+        connector_id,
+        status,
+        created_at,
     )
     return job_id
 
@@ -90,7 +109,7 @@ async def _insert_job(connection, workspace_id, connector_id, status, created_at
 @pytest.fixture
 async def seeded() -> dict:
     await _reset_to_base_revision()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     older, newer = now - timedelta(hours=2), now - timedelta(hours=1)
     ids: dict = {}
     connection = await _connect()
@@ -105,7 +124,8 @@ async def seeded() -> dict:
             "INSERT INTO connectors (id, workspace_id, source_system, status, "
             "encrypted_access_token, external_resource_ref) "
             "VALUES ($1, $2, 'github', 'connected', 'token', 'owner/repo')",
-            connector_id, workspace_id,
+            connector_id,
+            workspace_id,
         )
         ids.update(workspace=workspace_id, connector=connector_id)
 
@@ -183,9 +203,7 @@ async def test_duplicate_relationships_collapse_to_one(seeded):
 async def test_legacy_github_source_files_and_their_relationships_are_removed(seeded):
     files = await _fetch("SELECT id FROM artifacts WHERE artifact_type = 'source_file'")
     assert files == []
-    edges = await _fetch(
-        "SELECT id FROM relationships WHERE relationship_type = 'implements'"
-    )
+    edges = await _fetch("SELECT id FROM relationships WHERE relationship_type = 'implements'")
     assert edges == []
     commits = await _fetch("SELECT id FROM artifacts WHERE artifact_type = 'commit'")
     assert len(commits) == 1
@@ -241,13 +259,20 @@ async def test_new_constraints_reject_duplicates(seeded):
     try:
         with pytest.raises(asyncpg.UniqueViolationError):
             await _insert_artifact(
-                connection, seeded["workspace"], "notion", "document", "page-1",
-                datetime.now(timezone.utc),
+                connection,
+                seeded["workspace"],
+                "notion",
+                "document",
+                "page-1",
+                datetime.now(UTC),
             )
         with pytest.raises(asyncpg.UniqueViolationError):
             await _insert_job(
-                connection, seeded["workspace"], seeded["connector"], "queued",
-                datetime.now(timezone.utc),
+                connection,
+                seeded["workspace"],
+                seeded["connector"],
+                "queued",
+                datetime.now(UTC),
             )
     finally:
         await connection.close()

@@ -65,8 +65,10 @@ async def _run(
         connectors = await ConnectorRepository(session).list_by_workspace(workspace_id)
         if not connectors:
             raise SystemExit("this workspace has no connectors")
-        print(f"before: {await count(session, Artifact)} artifacts, "
-              f"{await count(session, Relationship)} relationships")
+        print(
+            f"before: {await count(session, Artifact)} artifacts, "
+            f"{await count(session, Relationship)} relationships"
+        )
         service = ConnectorService(session, voyage_client=voyage)
         for connector in connectors:
             if github_token_env and connector.source_system == "github":
@@ -83,8 +85,10 @@ async def _run(
             print(f"ingested {connector.source_system}: {rows} pieces")
         created = await RelationshipService(session).extract_for_workspace(workspace_id)
         print(f"new relationships: {created}")
-        print(f"after:  {await count(session, Artifact)} artifacts, "
-              f"{await count(session, Relationship)} relationships")
+        print(
+            f"after:  {await count(session, Artifact)} artifacts, "
+            f"{await count(session, Relationship)} relationships"
+        )
         if skip_embeddings:
             print("embeddings skipped: pieces stored without vectors (keyword search only)")
         else:

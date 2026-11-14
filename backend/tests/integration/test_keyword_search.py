@@ -63,9 +63,7 @@ async def test_results_are_ordered_by_relevance(db_session):
         "login retry login retry login retry: the login retry policy.",
     )
 
-    results = await ArtifactRepository(db_session).search_fulltext(
-        workspace.id, "login retry"
-    )
+    results = await ArtifactRepository(db_session).search_fulltext(workspace.id, "login retry")
 
     assert [a.id for a in results] == [strong.id, weak.id]
 
@@ -76,9 +74,7 @@ async def test_results_are_limited(db_session):
     for index in range(6):
         await _add(db_session, workspace, f"f{index}.py", f"f{index}.py", "shared keyword here")
 
-    results = await ArtifactRepository(db_session).search_fulltext(
-        workspace.id, "keyword", limit=4
-    )
+    results = await ArtifactRepository(db_session).search_fulltext(workspace.id, "keyword", limit=4)
 
     assert len(results) == 4
 

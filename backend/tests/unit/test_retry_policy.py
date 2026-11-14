@@ -13,7 +13,10 @@ def test_backoff_schedule_and_attempt_limit():
 
 
 def test_each_delay_is_longer_than_the_one_before():
-    assert all(later > earlier for earlier, later in zip(BACKOFF_SECONDS, BACKOFF_SECONDS[1:]))
+    assert all(
+        later > earlier
+        for earlier, later in zip(BACKOFF_SECONDS, BACKOFF_SECONDS[1:], strict=False)
+    )
 
 
 def test_there_is_a_delay_for_every_retry():

@@ -23,6 +23,7 @@ def is_permanent_failure(exc: Exception) -> bool:
     delays the real error."""
     return isinstance(exc, (ConnectorAuthError, ValueError))
 
+
 # research.md §1: an in-process asyncio poller, not a separate worker
 # process/service — a dedicated Render worker is a paid resource and would
 # break the $10 non-recurring budget the moment it's provisioned (ADR-001).

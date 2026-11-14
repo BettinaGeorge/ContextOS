@@ -36,9 +36,7 @@ class RetrievalService:
     async def retrieve(
         self, workspace_id: uuid.UUID, query_text: str, limit: int = DEFAULT_LIMIT
     ) -> list[Artifact]:
-        keyword_hits = await self._artifacts.search_fulltext(
-            workspace_id, query_text, limit=limit
-        )
+        keyword_hits = await self._artifacts.search_fulltext(workspace_id, query_text, limit=limit)
         query_embedding = self._voyage.embed_query(query_text)
         vector_hits = await self._artifacts.search_by_embedding(
             workspace_id, query_embedding, limit=limit
