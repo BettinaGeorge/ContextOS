@@ -91,7 +91,11 @@ class JobRepository:
     async def claim_oldest_queued(self) -> Job | None:
         """Used by the in-process job worker (core/job_worker.py, T022) to pick
         the next job to run. Not workspace-scoped by design — the worker
-        processes jobs across all workspaces, one at a time."""
+        processes jobs across all workspaces, one at a time.
+
+        FOR UPDATE SKIP LOCKED makes this safe with more than one worker: a row
+        another worker is claiming is skipped, not waited for, so no job is
+        claimed twice. The claim and the status change commit together."""
         result = await self._session.execute(
             select(Job)
             .where(
@@ -100,6 +104,7 @@ class JobRepository:
             )
             .order_by(Job.created_at)
             .limit(1)
+            .with_for_update(skip_locked=True)
         )
         job = result.scalar_one_or_none()
         if job is None:
