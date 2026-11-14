@@ -33,5 +33,18 @@ question rather than counting it against search.
 
 ## Recorded run (T003, owner)
 
-_Not run yet. Record the commit hash and per-question results here before any
-retrieval change (T031, T032)._
+Before any retrieval change. Commit `0aea7e5` (retrieval code unchanged from `main`).
+Workspace `7b9f39a0-8f81-464b-b374-c3eaec91adb6` (CreatorOS, 1,764 artifacts).
+Command: `uv run python -m scripts.keyword_baseline --workspace-id <id>`, run on 2026-11-14.
+
+**Result: 0 of 16 questions found their expected artifact in the top 10.**
+
+Every question reported MISSED. Cause: keyword search matches the whole question as
+one exact substring, so a sentence almost never matches. Checked that this is not a
+URL mismatch: a one-word search for "reel" returned 681 results whose URLs have the
+same `blob/HEAD/<path>#L..` form the expected URLs use. That check also showed the
+same chunk stored twice (`analytics_controller.py#L52-L54`, the duplicate-rows bug).
+
+## After (T034, owner)
+
+_Re-run on the new retrieval and record the result here._
