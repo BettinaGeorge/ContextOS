@@ -28,5 +28,14 @@ GitHub connector afterwards, which re-embeds every file (embedding quota).
 
 ## Re-ingest on the copy (owner)
 
-_Pending: run `scripts/ingest_workspace.py` twice on the copy and record the counts here.
-Expected: the second run adds no artifacts and sends zero texts to the embedding service._
+Run with `--skip-embeddings` (the free embedding tier needs hours for a whole repo), CreatorOS
+workspace, commit b68b742:
+
+- before: 588 artifacts, 1 relationship (the 24 left after the migration plus ones from earlier attempts)
+- ingested github: 587 pieces; ingested notion: 1 piece
+- after: 588 artifacts, 1 relationship; no duplicate identities
+- New relationships: 0 (expected: only one Notion page, so few explicit links to resolve)
+
+Not shown by this run: the "second run embeds zero texts" proof, because nothing was embedded.
+That behaviour is covered by the integration tests in `test_idempotent_ingestion.py`. A full run
+with embeddings is still needed before applying the migration to the real database.

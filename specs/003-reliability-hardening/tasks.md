@@ -128,7 +128,7 @@ description: "Task list for Phase 1 Reliability Hardening"
 - [x] T031 [US3] In `backend/src/repositories/artifact_repository.py`, add the question tokenizer and rewrite `search_fulltext` to filter by `workspace_id`, build `to_tsquery('english', ' | '.join(tokens))`, match on `search_vector`, order by `ts_rank` descending, apply a limit, and return `[]` without querying when there are no tokens. Keep the method name and signature compatible with `test_workspace_isolation.py`.
 - [x] T032 [US3] In `backend/src/services/retrieval_svc.py`, give both retrieval calls the same limit and replace concatenation with a `reciprocal_rank_fusion` function using `RRF_K = 60`. Update the class docstring.
 - [x] T033 [US3] Confirm the open items in `research.md` §14 against a real database: how `to_tsvector('english', ...)` splits `get_by_id` and `spin_widget` (use `ts_debug`), and that a stop-words-only `to_tsquery` returns no rows and no error. Write the results into `research.md` §14.
-- [ ] T034 (OWNER) [US3] Re-run `backend/scripts/keyword_baseline.py` on the new retrieval and add a before-and-after comparison to `specs/003-reliability-hardening/baseline.md`. Check SC-006: more questions find their expected artifact than at T003, and none that passed before now fail.
+- [x] T034 (OWNER) [US3] Re-run `backend/scripts/keyword_baseline.py` on the new retrieval and add a before-and-after comparison to `specs/003-reliability-hardening/baseline.md`. Check SC-006: more questions find their expected artifact than at T003, and none that passed before now fail.
 
 **Checkpoint**: US3 complete (ADR-006).
 

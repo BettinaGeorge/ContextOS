@@ -48,3 +48,16 @@ same chunk stored twice (`analytics_controller.py#L52-L54`, the duplicate-rows b
 ## After (T034, owner)
 
 _Re-run on the new retrieval and record the result here._
+
+
+## After (T034)
+
+Commit b68b742, `contextos_dev_copy` migrated and re-ingested (text only), same 16 questions,
+top-10 window.
+
+**12 of 16 found their expected artifact (was 0 of 16).** Rank 1: Q1, Q11-Q16. Rank 2: Q4, Q6.
+Rank 3: Q3, Q7. Rank 4: Q10.
+
+Missed: Q2, Q5, Q8, Q9. None passed before, so none regressed (SC-006 met: more found, none
+worse). The misses are candidates for the vector half of retrieval or for a check that the
+expected file was actually ingested; they are not counted as a failure of the keyword change.
