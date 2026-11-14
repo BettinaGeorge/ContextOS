@@ -2,7 +2,17 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, Float, ForeignKey, String, Text, func
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -37,6 +47,13 @@ class Relationship(Base):
             "relationship_origin IN ('explicit', 'metadata-derived', 'model-inferred', "
             "'user-confirmed')",
             name="ck_relationship_origin_valid",
+        ),
+        UniqueConstraint(
+            "workspace_id",
+            "source_artifact_id",
+            "target_artifact_id",
+            "relationship_type",
+            name="uq_relationship_edge",
         ),
     )
 
