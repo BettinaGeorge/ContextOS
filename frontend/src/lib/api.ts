@@ -97,6 +97,9 @@ export interface ConnectorStatusResponse {
   status: "connected" | "ingesting" | "complete" | "failed" | "needs_reconnect";
   last_ingested_at: string | null;
   error_message: string | null;
+  ingestion_attempts?: number | null;
+  max_attempts?: number | null;
+  next_attempt_at?: string | null;
 }
 
 export function getConnectorStatus(
@@ -116,6 +119,9 @@ export interface IngestJobResponse {
   job_id: string;
   status: "queued" | "running" | "complete" | "failed";
   error_message?: string | null;
+  attempts?: number;
+  max_attempts?: number;
+  next_attempt_at?: string | null;
 }
 
 export function triggerIngest(token: string, connectorId: string): Promise<IngestJobResponse> {

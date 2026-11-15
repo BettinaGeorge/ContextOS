@@ -127,4 +127,20 @@ Every answer ContextOS gives is grounded in retrieved evidence — it cites its 
 
 Every box above traces back to an explicit decision, not a default: see [`docs/decisions/ADR-001-weekend-mvp-stack.md`](docs/decisions/ADR-001-weekend-mvp-stack.md) and [`ADR-002-groq-llm-provider.md`](docs/decisions/ADR-002-groq-llm-provider.md) for why (budget-constrained: $0 for anything requiring a payment method). Generation (Groq) is confirmed free-tier, no card. Embeddings (Voyage AI) is still pay-per-use as originally chosen in ADR-001 — not yet revisited under the tightened $0 constraint; a free/local embeddings alternative is still an open question.
 
-`backend/` and `frontend/` don't exist in this repo yet — this diagram describes the target Phase 1 architecture that [`specs/001-trace-doc-to-code/`](specs/001-trace-doc-to-code/) is being built against, not code that's already running.
+`backend/` and `frontend/` now exist; this diagram describes the Phase 1 architecture that [`specs/001-trace-doc-to-code/`](specs/001-trace-doc-to-code/).
+
+## Known limitations
+
+Local-only, one user, one workspace. Reliability work done in
+[`specs/003-reliability-hardening/`](specs/003-reliability-hardening/): idempotent re-ingestion,
+ranked full-text search merged with vector results, bounded retries with backoff, safe job
+claiming, and escaped evidence. What remains:
+
+- Ingestion is always a full re-run. Unchanged pieces are skipped, but there is no incremental
+  sync or webhooks.
+- Upstream deletions: chunks that disappear from a file that still exists are removed on re-ingest, but a file, PR, commit or page deleted upstream stays in the workspace.
+- The sweep that frees abandoned jobs is minimal (a fixed 60-minute timeout).
+- Evidence escaping is tested with adversarial strings, not against a live model's behavior.
+- Retrieval quality is spot-checked by hand (16-question keyword baseline), not by a formal
+  evaluation harness.
+- Not deployed.

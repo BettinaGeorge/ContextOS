@@ -1,5 +1,7 @@
 # Phase 1 Data Model: Trace a Spec/Doc to Code
 
+> **Changed by feature 003:** artifact identity and the meaning of `checksum` differ from what is described below. See `specs/003-reliability-hardening/data-model.md`.
+
 All tables carry `workspace_id` per Constitution Principle VI, even though only one workspace is exercised in this phase. This extends the canonical model in `docs/prd.md` §6 with the fields needed to actually implement it.
 
 ## Workspace

@@ -7,8 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.errors import ConflictError, NotFoundError
 from src.core.auth import CurrentUser, get_current_user
 from src.core.db import get_db
+from src.core.job_worker import MAX_ATTEMPTS
 from src.models.connector import SourceSystem
+from src.models.job import Job, JobStatus
 from src.repositories.connector_repository import ConnectorRepository
+from src.repositories.job_repository import JobRepository
 from src.repositories.workspace_repository import WorkspaceRepository
 
 router = APIRouter(prefix="/connectors", tags=["connectors"])
@@ -35,6 +38,9 @@ class ConnectorStatusResponse(BaseModel):
     status: str
     last_ingested_at: str | None
     error_message: str | None
+    ingestion_attempts: int | None = None
+    max_attempts: int | None = None
+    next_attempt_at: str | None = None
 
 
 async def _get_owned_workspace(db: AsyncSession, user: CurrentUser):
@@ -44,7 +50,12 @@ async def _get_owned_workspace(db: AsyncSession, user: CurrentUser):
     return workspace
 
 
-def _to_status_response(connector) -> ConnectorStatusResponse:
+def _to_status_response(connector, latest_job: Job | None = None) -> ConnectorStatusResponse:
+    waiting_to_retry = (
+        latest_job is not None
+        and latest_job.status == JobStatus.queued
+        and latest_job.next_attempt_at is not None
+    )
     return ConnectorStatusResponse(
         connector_id=str(connector.id),
         source_system=connector.source_system,
@@ -53,6 +64,9 @@ def _to_status_response(connector) -> ConnectorStatusResponse:
         if connector.last_ingested_at
         else None,
         error_message=connector.error_message,
+        ingestion_attempts=latest_job.attempts if latest_job else None,
+        max_attempts=MAX_ATTEMPTS if latest_job else None,
+        next_attempt_at=latest_job.next_attempt_at.isoformat() if waiting_to_retry else None,
     )
 
 
@@ -104,7 +118,11 @@ async def list_connectors(
     the workspace before it can poll each one's status individually."""
     workspace = await _get_owned_workspace(db, user)
     connectors = await ConnectorRepository(db).list_by_workspace(workspace.id)
-    return [_to_status_response(c) for c in connectors]
+    jobs = JobRepository(db)
+    return [
+        _to_status_response(c, await jobs.latest_for_connector(workspace.id, c.id))
+        for c in connectors
+    ]
 
 
 @router.get("/{connector_id}/status", response_model=ConnectorStatusResponse)
@@ -117,4 +135,5 @@ async def connector_status(
     connector = await ConnectorRepository(db).get_by_id(workspace.id, UUID(connector_id))
     if connector is None:
         raise NotFoundError(error="connector_not_found")
-    return _to_status_response(connector)
+    latest_job = await JobRepository(db).latest_for_connector(workspace.id, connector.id)
+    return _to_status_response(connector, latest_job)

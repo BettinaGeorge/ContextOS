@@ -1,5 +1,6 @@
 import pytest
 
+from src.core.job_worker import MAX_ATTEMPTS
 from src.models.connector import ConnectorStatus, SourceSystem
 from src.models.job import JobStatus, JobType
 from src.models.workspace import Workspace
@@ -69,10 +70,32 @@ async def test_handle_ingestion_job_marks_connector_failed_on_error(db_session, 
         raise RuntimeError("GitHub API is down")
 
     monkeypatch.setattr(connector_svc_module.ConnectorService, "ingest", failing_ingest)
+    job.attempts = MAX_ATTEMPTS  # final attempt: the connector is marked failed only now
 
     with pytest.raises(RuntimeError):
         await _handle_ingestion_job(job, db_session)
 
     refreshed = await ConnectorRepository(db_session).get_by_id(workspace.id, connector.id)
     assert refreshed.status == ConnectorStatus.failed
+    assert refreshed.error_message == "GitHub API is down"
+
+
+@pytest.mark.asyncio
+async def test_handle_ingestion_job_keeps_connector_ingesting_when_retries_remain(
+    db_session, monkeypatch
+):
+    workspace, connector = await _make_workspace_and_connector(db_session, owner="user-4")
+    job = await JobRepository(db_session).enqueue(workspace.id, connector.id, JobType.ingest_github)
+    job.attempts = 1
+
+    async def failing_ingest(self, workspace_id, connector):
+        raise RuntimeError("GitHub API is down")
+
+    monkeypatch.setattr(connector_svc_module.ConnectorService, "ingest", failing_ingest)
+
+    with pytest.raises(RuntimeError):
+        await _handle_ingestion_job(job, db_session)
+
+    refreshed = await ConnectorRepository(db_session).get_by_id(workspace.id, connector.id)
+    assert refreshed.status == ConnectorStatus.ingesting
     assert refreshed.error_message == "GitHub API is down"

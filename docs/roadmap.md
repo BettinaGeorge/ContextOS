@@ -28,7 +28,7 @@ Scope defined in `docs/prd.md` §4. Target: Friday, 2026-07-24.
 - Incremental sync for GitHub and Notion (webhooks or polling)
 - Improve code chunking (move from naive to function/class-boundary if not done in Phase 1)
 - Expand the deterministic-relationship convention if manual testing in Phase 1 revealed gaps
-- Basic ingestion error handling and retry behavior
+- ~~Basic ingestion error handling and retry behavior~~ **Done** in `specs/003-reliability-hardening/` (bounded retries with backoff, safe job claiming, one active job per connector)
 - Real deployment (not local-only) — Railway/Render/Fly per ADR-001, managed Postgres
 
 ## Phase 3 — Reliability pass
@@ -38,8 +38,8 @@ Per the handoff's principle that reliability is a product requirement, not a lat
 - Build the formal evaluation harness against the question set started in Phase 1 (expand it)
 - Citation validation (automated check that a cited source actually supports the claim next to it)
 - Conflict detection between sources
-- Prompt-injection adversarial test suite (content from repo/Notion treated as untrusted input, tested against actual injection attempts)
-- Retrieval + generation tracing/observability
+- Prompt-injection adversarial test suite (content from repo/Notion treated as untrusted input, tested against actual injection attempts) — *partly pulled forward*: evidence escaping and its adversarial unit tests landed in 003 (ADR-008); tests against the live model remain open
+- Retrieval + generation tracing/observability — *still open* (003 added ranked full-text search and rank fusion, not tracing)
 
 **Do not add new workflows or connectors before this phase is done.** Breadth before reliability is exactly the failure mode this project is designed to avoid.
 

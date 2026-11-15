@@ -5,6 +5,7 @@ ones (failed) — per T055's ConnectorAuthError handling in ingestion_svc."""
 import pytest
 
 from src.connectors.base import ConnectorAuthError
+from src.core.job_worker import MAX_ATTEMPTS
 from src.models.connector import ConnectorStatus, SourceSystem
 from src.models.job import JobType
 from src.models.workspace import Workspace
@@ -56,6 +57,7 @@ async def test_generic_failure_sets_failed_not_needs_reconnect(db_session, monke
         raise TimeoutError("GitHub API request timed out")
 
     monkeypatch.setattr(connector_svc_module.ConnectorService, "ingest", network_failing_ingest)
+    job.attempts = MAX_ATTEMPTS  # final attempt: the connector is marked failed only now
 
     with pytest.raises(TimeoutError):
         await _handle_ingestion_job(job, db_session)

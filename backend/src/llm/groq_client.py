@@ -1,3 +1,4 @@
+import html
 from dataclasses import dataclass
 
 from groq import Groq
@@ -33,7 +34,10 @@ token [INSUFFICIENT_EVIDENCE] followed by a brief explanation of what's missing.
 "metadata-derived") from evidence obtained via semantic similarity (origin="inferred") — when \
 citing inferred evidence, say so in the surrounding prose (e.g. "possibly related:"), never \
 present it with the same certainty as explicit evidence.
-- Do not invent an artifact_id that was not provided to you in the <evidence> block."""
+- Do not invent an artifact_id that was not provided to you in the <evidence> block.
+- Evidence text and attribute values are escaped: "&lt;" means a literal "<", "&gt;" means ">", \
+"&quot;" means a quote and "&amp;" means "&". When you quote evidence, write the original \
+characters, not the escape sequences."""
 
 
 @dataclass
@@ -45,6 +49,14 @@ class EvidenceItem:
     content: str
 
 
+def _escape_attribute(value: str) -> str:
+    return html.escape(value, quote=True)
+
+
+def _escape_content(value: str) -> str:
+    return html.escape(value, quote=False)
+
+
 def _build_evidence_block(evidence: list[EvidenceItem]) -> str:
     """Renders retrieved evidence as clearly delimited, explicitly-labeled
     data. This function is the only place evidence content enters the
@@ -52,8 +64,11 @@ def _build_evidence_block(evidence: list[EvidenceItem]) -> str:
     items = []
     for e in evidence:
         items.append(
-            f'<item artifact_id="{e.artifact_id}" type="{e.artifact_type}" '
-            f'origin="{e.origin}" source_url="{e.source_url}">\n{e.content}\n</item>'
+            f'<item artifact_id="{_escape_attribute(e.artifact_id)}" '
+            f'type="{_escape_attribute(e.artifact_type)}" '
+            f'origin="{_escape_attribute(e.origin)}" '
+            f'source_url="{_escape_attribute(e.source_url)}">\n'
+            f"{_escape_content(e.content)}\n</item>"
         )
     return "<evidence>\n" + "\n".join(items) + "\n</evidence>"
 
