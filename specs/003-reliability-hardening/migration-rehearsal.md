@@ -39,6 +39,10 @@ workspace, commit b68b742:
 Second text-only run (same command): 588 artifacts and 1 relationship before and after, so a repeat
 run adds no duplicates on real data.
 
-Not shown by these runs: the "second run embeds zero texts" proof, because nothing was embedded.
-That behaviour is covered by the integration tests in `test_idempotent_ingestion.py`. A full run
-with embeddings is still needed before applying the migration to the real database.
+Full run with embeddings (after the earlier real ingest had already stored vectors): two runs back to
+back each sent **0 texts** to the embedding service; 588 artifacts and 1 relationship before and
+after each. Database check: no artifact in the CreatorOS workspace has a null embedding. The 137
+rows without one belong to other workspaces and are leftover single-artifact test workspaces.
+
+**T013 conclusion:** after the migration and a re-ingest, no identity has more than one row,
+repeat runs add nothing and embed nothing, and keyword search recovers 12 of 16 baseline questions.

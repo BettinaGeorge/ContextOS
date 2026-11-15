@@ -22,7 +22,7 @@ commit 6d40ff1 unless stated. **Status: in progress.** Rows marked "pending" sti
 |---|---|---|
 | 0 | Keyword baseline | Done. 0 of 16 before (commit 0aea7e5). See `baseline.md` |
 | 1 | Evidence cannot be broken out of | Passed: `test_evidence_escaping.py` (11 breakout patterns, neighbours undisturbed) and `test_cite_marker_in_evidence.py` |
-| 2 | Re-ingest twice, no change | Tests pass (`test_idempotent_ingestion.py`). Real-data text-only re-run on the copy: 588 artifacts and 1 relationship before and after, 0 new relationships. The "0 texts embedded" proof on real data is pending a full run with embeddings |
+| 2 | Re-ingest twice, no change | Tests pass (`test_idempotent_ingestion.py`). Real-data text-only re-run on the copy: 588 artifacts and 1 relationship before and after, 0 new relationships. With embeddings: two runs back to back each sent 0 texts to the embedding service and left 588 artifacts and 1 relationship unchanged. Checked in the database: 0 CreatorOS artifacts lack an embedding (the 137 without one are leftover single-artifact test workspaces) |
 | 3 | One change at the source | Tests pass (`test_ingestion_changes.py`) |
 | 4 | Keyword search on natural questions | **12 of 16 found, up from 0 of 16; none regressed (SC-006).** See `baseline.md` |
 | 5 | Retry and visibility | Tests pass (`test_retry_policy.py`, `test_ingest_retry.py`, `test_ingest_status.py`, status page tests). Live check on the status page: pending |
@@ -31,6 +31,5 @@ commit 6d40ff1 unless stated. **Status: in progress.** Rows marked "pending" sti
 
 ## Open items
 
-- A full re-ingest with embeddings on the copy, showing the second run sends 0 texts.
 - Live status-page check of a retrying connector.
 - Owner review (T058) and the decision on applying the migration to the real database.
