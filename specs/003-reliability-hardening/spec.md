@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-14
 
-**Status**: Draft
+**Status**: Approved (2026-11-15)
 
 **Input**: User description: "Phase 1 hardening: make ingestion and retrieval reliable without changing the product scope. (1) Ingestion job claiming must be safe if more than one worker runs: two workers must never run the same queued job. (2) Failed ingestion jobs must be retried a bounded number of times with backoff before being marked failed, and the final error must stay visible on the status page. (3) Re-ingesting a connector must be idempotent: running it twice produces the same artifacts, never duplicates, and unchanged artifacts (same checksum) are not re-embedded. (4) Keyword retrieval must use real Postgres full-text search with ranking instead of an ILIKE substring match on the whole question, and keyword and vector results must be merged by rank fusion instead of concatenation. (5) Retrieved content placed in the evidence block must be escaped so a document containing the closing evidence tag cannot break out of its delimiter, with an adversarial test proving it. Out of scope: new connectors, OAuth (feature 002), incremental sync, graph retrieval, any change to the citation-validation or abstention behaviour."
 

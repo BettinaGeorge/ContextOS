@@ -1,7 +1,7 @@
 # Validation: 003 Reliability hardening
 
 Run on the owner's machine (scratch database `contextos_test`, Postgres 17 on port 5433) at
-commit 6d40ff1 unless stated. **Status: in progress.** Rows marked "pending" still need a run.
+commit 6d40ff1 unless stated. **Status: complete except the live status-page check, which was deliberately skipped** (it needs a signed-in app and a connector; the same behavior is covered by the status-page tests and the backend retry tests).
 
 ## Automated results
 
@@ -25,11 +25,11 @@ commit 6d40ff1 unless stated. **Status: in progress.** Rows marked "pending" sti
 | 2 | Re-ingest twice, no change | Tests pass (`test_idempotent_ingestion.py`). Real-data text-only re-run on the copy: 588 artifacts and 1 relationship before and after, 0 new relationships. With embeddings: two runs back to back each sent 0 texts to the embedding service and left 588 artifacts and 1 relationship unchanged. Checked in the database: 0 CreatorOS artifacts lack an embedding (the 137 without one are leftover single-artifact test workspaces) |
 | 3 | One change at the source | Tests pass (`test_ingestion_changes.py`) |
 | 4 | Keyword search on natural questions | **12 of 16 found, up from 0 of 16; none regressed (SC-006).** See `baseline.md` |
-| 5 | Retry and visibility | Tests pass (`test_retry_policy.py`, `test_ingest_retry.py`, `test_ingest_status.py`, status page tests). Live check on the status page: pending |
+| 5 | Retry and visibility | Tests pass (`test_retry_policy.py`, `test_ingest_retry.py`, `test_ingest_status.py`, status page tests). Live check on the status page: skipped (see above) |
 | 6 | Two workers | Tests pass (`test_job_claiming.py`, `test_single_active_job.py`) |
 | 7 | Migration on a copy of real data | Done on `contextos_dev_copy`: 2,060 artifacts and 585 duplicate identities before; 214 artifacts and 0 duplicates after. See `migration-rehearsal.md` |
 
 ## Open items
 
-- Live status-page check of a retrying connector.
+- Live status-page check of a retrying connector (skipped; optional).
 - Owner review (T058) and the decision on applying the migration to the real database.

@@ -1,6 +1,6 @@
 # ADR-008: Escape retrieved content in the evidence block
 
-Status: Proposed (accepted when `specs/003-reliability-hardening/spec.md` is approved).
+Status: Accepted (2026-11-15; validated in `specs/003-reliability-hardening/validation.md`).
 
 ## Context
 

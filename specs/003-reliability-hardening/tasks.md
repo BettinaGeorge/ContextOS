@@ -195,8 +195,8 @@ description: "Task list for Phase 1 Reliability Hardening"
 - [x] T053 [P] Add a "Superseded in part by ADR-007" note to the Consequences of `docs/decisions/ADR-001-weekend-mvp-stack.md`, and add a one-line pointer to `specs/003-reliability-hardening/data-model.md` in `specs/001-trace-doc-to-code/data-model.md` for the changed identity and checksum meaning.
 - [x] T054 [P] Add a resolved entry for re-ingestion idempotency to `docs/prd.md` §10, pointing to ADR-005 and this spec (the old code comment cited a PRD open question that was never written there).
 - [x] T055 Run the full regression: `uv run pytest`, `uv run ruff check .` in `backend/`; `pnpm test`, `pnpm lint` in `frontend/`. Then run `git diff main -- backend/tests frontend/src` and confirm the only changes to existing tests are fixture data from T012 and T042 and added tests, with no assertion line changed (SC-007).
-- [ ] T056 Run every scenario in `quickstart.md` (0 to 7) and write the results, with counts, in `specs/003-reliability-hardening/validation.md`.
-- [ ] T057 Change ADR-005, ADR-006, ADR-007 and ADR-008 from "Proposed" to "Accepted" and set the spec status to Approved, once T056 passes.
+- [x] T056 Run every scenario in `quickstart.md` (0 to 7) and write the results, with counts, in `specs/003-reliability-hardening/validation.md`.
+- [x] T057 Change ADR-005, ADR-006, ADR-007 and ADR-008 from "Proposed" to "Accepted" and set the spec status to Approved, once T056 passes.
 - [ ] T058 (OWNER) Review `validation.md` and `migration-rehearsal.md`, then decide whether to apply the migration to the real database and re-ingest each connector so code files return.
 
 ---
